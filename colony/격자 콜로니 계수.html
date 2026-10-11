@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610111518';   /*APPVER*/
+  var MY = '202610111532';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -16,7 +16,7 @@
 })();
 </script>
 <title>격자 콜로니 계수</title>
-<meta name="version" content="202610111518">
+<meta name="version" content="202610111532">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -1011,10 +1011,10 @@ $('ncClear').onclick = () => { S.ncPlate = null; S.ncPts = null; idbPut('meta', 
 async function autoCount(p, force){
   await ensureCircle(p); await yieldUI();
   const P = activeParams(), nc = await ncPoints(); const r = P ? findBlobsWith(p.img, p.data.circle, LEARN_SENS, LEARN_MINAREA) : findBlobs(p.img, p.data.circle);
-  const col = [], ncl = []; let refl = 0, filt = 0;
-  for (const b of r.blobs){ const c = classify(b, nc, P); if (c === 'reflect') refl++; else if (c === 'nclike') ncl.push(b); else if (c === 'filtered') filt++; else col.push(b); }
+  const col = [], ncl = []; let refl = 0, filt = 0, mk = 0;
+  for (const b of r.blobs){ const c = classify(b, nc, P); if (c === 'reflect') refl++; else if (c === 'nclike') ncl.push(b); else if (c === 'filtered') filt++; else if (c === 'marker') mk++; else col.push(b); }
   if (p.label === 'N.C') col.length = 0;
- p.data.auto = {nc0: col.length, nclike: ncl.length, reflect: refl, filtered: filt, tuned: !!P, excluded: +r.excluded.toFixed(3), nc: !!nc, at: new Date().toISOString(), applied: false};
+ p.data.auto = {nc0: col.length, nclike: ncl.length, reflect: refl, filtered: filt, marker: mk, tuned: !!P, excluded: +r.excluded.toFixed(3), nc: !!nc, at: new Date().toISOString(), applied: false};
   {
     // 직접 클릭한 점은 그대로 두고 자동 점만 새로 채움
     const manual = (p.data.marks || []).filter(k => k.manual);
@@ -1158,7 +1158,12 @@ const brightDom = b => b.bright >= b.sat && b.bright >= b.dark;
 const BRIGHT_OFF = 999;   // 밝은 흰 점 추가 기준 999 = 흰 점은 세지 않음
 const LEARN_SENS = 5, LEARN_MINAREA = 4;   // 학습·학습 기준 자동 계수 때의 후보 찾기 감도 (기본 8, 8보다 옅고 작은 점까지)
 function findBlobsWith(img, circ, sens, minArea){ const s0 = AC.sens, a0 = AC.minArea; AC.sens = sens; AC.minArea = minArea; try { return findBlobs(img, circ); } finally { AC.sens = s0; AC.minArea = a0; } }
+// N.C 대조 사진이 없을 때 기본 기준: 진하기 18 이상·크기 60px 이상만 (N.C 기준으로 거른 결과와 97% 일치하도록 시험 사진 7장으로 맞춤, 2026-10-11)
+const NO_NC = { minPeak: 18, minArea: 60 };
+// 다른 프로그램이 그린 표시(빨강·초록 등 아주 진한 색 점)는 콜로니가 아님 → 「표시 점 자동 세기」로 셀 것
+const MARKER_SAT = 150;
 function classify(b, nc, P){
+  if (b.sat >= MARKER_SAT) return 'marker';
   if (P && P.v >= 3 && P.model){   // 학습 모델: 후보 점의 특징으로 「콜로니일 확률」을 계산해 기준 이상만 셈
     const ncl = nc && nc.some(q => q.peak >= b.peak && q.area >= b.area) ? 1 : 0;
     return lrProb(P.model, featOf(b, ncl, P.model.basic)) >= P.model.thr ? 'colony' : (ncl ? 'nclike' : isReflect(b) ? 'reflect' : 'filtered'); }
@@ -1166,6 +1171,7 @@ function classify(b, nc, P){
   if (P){ const bx = P.brightExtra ?? (P.noBright ? BRIGHT_OFF : 0);
     if (b.peak < P.minPeak || b.area < P.minArea || (brightDom(b) && b.peak < P.minPeak + bx)) return 'filtered'; }
   if ((!P || P.useNC) && nc && nc.some(q => q.peak >= b.peak && q.area >= b.area)) return 'nclike';
+  if (!P && !nc && (b.peak < NO_NC.minPeak || b.area < NO_NC.minArea)) return 'filtered';   // N.C 없음: 옅고 작은 잡티는 셈에서 뺌
   return 'colony';
 }
 S.autoParams = (() => { try { return JSON.parse(localStorage.getItem(LS_KEY + 'autoParams')) || null; } catch(e){ return null; } })();
@@ -1320,7 +1326,7 @@ $('paramsIn').onchange = async e => { const f = e.target.files[0]; e.target.valu
     S.autoParams = { ...o.params, imported: f.name }; localStorage.setItem(LS_KEY + 'autoParams', JSON.stringify(S.autoParams)); S.ncPts = null; loadTrain();
   } catch(err){ alert('학습 기준 파일이 아닙니다.'); } };
 
-function autoText(a){ if (!a) return ''; if (a.view != null) return `자동 계수${a.tuned ? '(맞춘 기준)' : ''}: 이 판 자동 점 ${a.nc0}개`; return `자동 계수${a.tuned ? '(맞춘 기준)' : ''}: 콜로니 ${a.nc0}개 (NC 유사 점 ${a.nclike}개·반사 ${a.reflect}개${a.filtered ? `·기준 미달 ${a.filtered}개` : ''} 제외${a.nc ? '' : ', N.C 없음'})${a.excluded > 0.15 ? ` · 펜/라벨로 막의 ${(a.excluded*100).toFixed(0)}% 제외됨 — 확인 필요` : ''}`; }
+function autoText(a){ if (!a) return ''; if (a.view != null) return `자동 계수${a.tuned ? '(맞춘 기준)' : ''}: 이 판 자동 점 ${a.nc0}개`; return `자동 계수${a.tuned ? '(맞춘 기준)' : ''}: 콜로니 ${a.nc0}개 (NC 유사 점 ${a.nclike}개·반사 ${a.reflect}개${a.filtered ? `·${a.nc || a.tuned ? '기준 미달' : '옅고 작은 잡티'} ${a.filtered}개` : ''} 제외${a.nc ? '' : ', N.C 없음 → 진하기 18·크기 60px 이상만 셈. N.C 사진을 넣으면 더 정확'})${a.marker ? ` · 다른 프로그램 표시로 보이는 점 ${a.marker}개는 뺌 → 「표시 점 자동 세기」를 쓰세요` : ''}${a.excluded > 0.15 ? ` · 펜/라벨로 막의 ${(a.excluded*100).toFixed(0)}% 제외됨 — 확인 필요` : ''}`; }
 
 // ---------- 목록 / 사이드 ----------
 function renderList(){
