@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610111646';   /*APPVER*/
+  var MY = '202610111724';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -16,7 +16,7 @@
 })();
 </script>
 <title>격자 콜로니 계수</title>
-<meta name="version" content="202610111646">
+<meta name="version" content="202610111724">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -1156,11 +1156,15 @@ function segmentMarkers(R, n, H, Sv, V, IN, target){
   const m = new Uint8Array(n), sMin = Math.max(0.3, target.s * 0.55), vMin = target.v * 0.45;
   let on = 0; for (let i = 0; i < n; i++) if (IN[i] && Sv[i] >= sMin && V[i] >= vMin && hueDist(H[i], target.h) <= 14){ m[i] = 1; on++; }
   if (on > n * 0.15) return {error: '고른 색이 사진 대부분에 있습니다(배경색). 표시 한가운데 선을 정확히 클릭해 보세요.', target};
+  // 속(core): 표시 색이 진하게 꽉 찬 부분만. 표시가 붉은 콜로니 위에 찍히면 콜로니의 옅은 붉은 테두리까지 잡히므로, 개수 나누기·중심은 속으로 정함
+  const core = new Uint8Array(n), sCore = Math.max(0.6, target.s * 0.85), vCore = target.v * 0.7;
+  for (let i = 0; i < n; i++) if (m[i] && Sv[i] >= sCore && V[i] >= vCore) core[i] = 1;
   const md = dilate(Float32Array.from(m), R.w, R.h, 5);   // 끊긴 동그라미 선·글자 획을 한 덩어리로
   const lab = new Int32Array(n), comps = [], st = [];
-  for (let i = 0; i < n; i++){ if (lab[i] || !md[i]) continue; const cp = {a: 0, sx: 0, sy: 0, x0: 1e9, y0: 1e9, x1: -1, y1: -1}; lab[i] = comps.length + 1; st.push(i);
+  for (let i = 0; i < n; i++){ if (lab[i] || !md[i]) continue; const cp = {a: 0, sx: 0, sy: 0, x0: 1e9, y0: 1e9, x1: -1, y1: -1, c: 0, csx: 0, csy: 0, cx0: 1e9, cy0: 1e9, cx1: -1, cy1: -1}; lab[i] = comps.length + 1; st.push(i);
     while (st.length){ const j = st.pop(), jx = j % R.w, jy = (j / R.w) | 0;
       if (m[j]){ cp.a++; cp.sx += jx; cp.sy += jy; }
+      if (core[j]){ cp.c++; cp.csx += jx; cp.csy += jy; if (jx < cp.cx0) cp.cx0 = jx; if (jx > cp.cx1) cp.cx1 = jx; if (jy < cp.cy0) cp.cy0 = jy; if (jy > cp.cy1) cp.cy1 = jy; }
       if (jx < cp.x0) cp.x0 = jx; if (jx > cp.x1) cp.x1 = jx; if (jy < cp.y0) cp.y0 = jy; if (jy > cp.y1) cp.y1 = jy;
       for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++){ const kx = jx + dx, ky = jy + dy; if (kx < 0 || ky < 0 || kx >= R.w || ky >= R.h) continue; const k = ky * R.w + kx; if (md[k] && !lab[k]){ lab[k] = comps.length + 1; st.push(k); } } }
     if (cp.a >= 8) comps.push(cp); }
@@ -1169,13 +1173,20 @@ function segmentMarkers(R, n, H, Sv, V, IN, target){
   // 표시 하나의 크기 = 중간값. 그보다 훨씬 큰 덩어리는 겹친 표시로 보고 크기 비율만큼 셈
   const areas = comps.map(c => c.a).sort((a, b) => a - b), med = areas[areas.length >> 1];
   const boxes = comps.map(c => Math.max(c.x1 - c.x0, c.y1 - c.y0)).sort((a, b) => a - b), medBox = boxes[boxes.length >> 1];
+  // 속(진한 부분) 크기의 중간값 = 표시 하나. 겹친 표시는 속도 그만큼 크고 길쭉함
+  const cores = comps.filter(c => c.c > 0), cMed = cores.length ? cores.map(c => c.c).sort((a, b) => a - b)[cores.length >> 1] : 0;
+  const cBox = cores.length ? cores.map(c => Math.max(c.cx1 - c.cx0, c.cy1 - c.cy0) + 1).sort((a, b) => a - b)[cores.length >> 1] : 0;
   const pts = []; let merged = 0, small = 0, long = 0;
   for (const c of comps){
     if (c.a < med * 0.2){ small++; continue; }   // 표시보다 훨씬 작은 조각(잡티) 버림
     const L = Math.max(c.x1 - c.x0, c.y1 - c.y0) + 1; if (L > medBox * 2.5 && c.a / L < 0.7 * med / (medBox + 1)){ long++; continue; }   // 표시보다 길고 가는 획(펜 글씨·선) 버림 (겹친 표시는 길이만큼 면적도 커서 남음)
-    const k = c.a > med * 1.6 ? Math.max(2, Math.round(c.a / med)) : 1, cx = c.sx / c.a + R.x0, cy = c.sy / c.a + R.y0;
-    if (k > 1){ merged++; const L = Math.max(c.x1 - c.x0, c.y1 - c.y0), horiz = (c.x1 - c.x0) >= (c.y1 - c.y0);
-      for (let t = 0; t < k; t++){ const o = (t - (k - 1) / 2) * L / k; pts.push({x: cx + (horiz ? o : 0), y: cy + (horiz ? 0 : o)}); } }
+    const useCore = c.c > 0 && cMed > 0, cx = (useCore ? c.csx / c.c : c.sx / c.a) + R.x0, cy = (useCore ? c.csy / c.c : c.sy / c.a) + R.y0;
+    // 몇 개가 겹쳤나: 속 넓이 비율과 속 길이(표시가 몇 개 들어갈 길이인지) 중 작은 값
+    let k = 1;
+    if (useCore && c.c > cMed * 1.6){ const Lc = Math.max(c.cx1 - c.cx0, c.cy1 - c.cy0) + 1; k = Math.max(1, Math.min(Math.round(c.c / cMed), Math.round(Lc / Math.max(1, cBox)))); }
+    else if (!useCore && c.a > med * 1.6) k = Math.max(1, Math.min(Math.round(c.a / med), Math.round(L / Math.max(1, medBox))));
+    if (k > 1){ merged++; const LL = useCore ? Math.max(c.cx1 - c.cx0, c.cy1 - c.cy0) : L, horiz = useCore ? (c.cx1 - c.cx0) >= (c.cy1 - c.cy0) : (c.x1 - c.x0) >= (c.y1 - c.y0);
+      for (let t = 0; t < k; t++){ const o = (t - (k - 1) / 2) * LL / k; pts.push({x: cx + (horiz ? o : 0), y: cy + (horiz ? 0 : o)}); } }
     else pts.push({x: cx, y: cy});
   }
   return {pts, target, merged, small, long, med, comps};
