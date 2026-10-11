@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>격자 콜로니 계수</title>
-<meta name="version" content="202610111451">
+<meta name="version" content="202610111457">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -154,7 +154,7 @@ dialog#updDlg h3{font:800 16px var(--serif);color:var(--accent);margin:0 0 6px}
 
 <div id="stage">
   <canvas id="cv"></canvas>
-  <div id="tools"><div class="seg"><button id="btnDoneTool" title="이 사진 계수 완료 표시/취소 (C)">✔ 계수 완료 <kbd>C</kbd></button></div><div class="seg"><button id="btnAlignGrid" title="사진을 돌려 인쇄 격자를 가로·세로로 반듯하게 (판마다 자동, 점도 함께 돎)">⊞ 격자 수직 <kbd>R</kbd></button><button id="btnRotL" title="왼쪽으로 90° 돌리기">↺</button><button id="btnRotR" title="오른쪽으로 90° 돌리기">↻</button></div><div class="seg"><button id="btnFit" title="막 전체 보기">전체 <kbd>F</kbd></button><button id="btnZoomIn" title="확대">＋</button><button id="btnZoomOut" title="축소">－</button></div><div class="seg dotsz"><span title="[ / ] 키로도 조절">점</span><input id="dotSize" type="range" min="1.5" max="12" step="0.5" title="점 크기 ( [ / ] 키)"><b id="dotSizeVal"></b><span>숫자</span><input id="numSize" type="range" min="0.08" max="0.3" step="0.01" title="칸 숫자 크기"><b id="numSizeVal"></b></div></div>
+  <div id="tools"><div class="seg"><button id="btnDoneTool" title="이 사진 계수 완료 표시/취소 (C)">✔ 계수 완료 <kbd>C</kbd></button></div><div class="seg"><button id="btnAlignGrid" title="사진을 돌려 인쇄 격자를 가로·세로로 반듯하게 (판마다 자동, 점도 함께 돎)">⊞ 격자 수직 <kbd>R</kbd></button><button id="btnRotL" title="왼쪽으로 90° 돌리기">↺</button><button id="btnRotR" title="오른쪽으로 90° 돌리기">↻</button><button id="btnNoGridTool" title="이 판의 격자 없애기 / 다시 맞추기 (격자 없으면 합계 = 찍은 점 개수)">격자 없애기</button></div><div class="seg"><button id="btnFit" title="막 전체 보기">전체 <kbd>F</kbd></button><button id="btnZoomIn" title="확대">＋</button><button id="btnZoomOut" title="축소">－</button></div><div class="seg dotsz"><span title="[ / ] 키로도 조절">점</span><input id="dotSize" type="range" min="1.5" max="12" step="0.5" title="점 크기 ( [ / ] 키)"><b id="dotSizeVal"></b><span>숫자</span><input id="numSize" type="range" min="0.08" max="0.3" step="0.01" title="칸 숫자 크기"><b id="numSizeVal"></b></div></div>
   <input id="entry" type="text" inputmode="numeric" autocomplete="off">
   <div id="drop">위의 「사진 열기」로 사진을 고르거나 (여러 장 가능),<br>사진·폴더를 여기로 끌어다 놓으세요.</div>
   <div id="hint"></div>
@@ -759,6 +759,7 @@ $('btnNoGrid').onclick = () => { const p = cur(); if (!p) return; closeEntry(fal
   if (p.data.noGrid){ setNoGrid(p, false); updateSide(); renderList(); draw(); return; }   // 없앤 판에서 누르면 다시 맞춤
   if (typedCells(p) && !confirm(`이 판에 칸마다 직접 입력한 숫자 ${typedCells(p)}칸이 있습니다. 격자를 없애면 그 숫자는 합계에 안 들어갑니다(찍은 점 개수로만 셈). 계속할까요?`)) return;
   setNoGrid(p, true); updateSide(); renderList(); draw(); };
+$('btnNoGridTool').onclick = () => $('btnNoGrid').click();
 $('btnNoGridChecked').onclick = () => { const list = S.plates.filter(p => S.checked.has(p.id)); if (!list.length) return alert('격자를 없앨 사진을 왼쪽 체크칸으로 고르세요.');
   const typed = list.filter(typedCells).length;
   if (!confirm(`체크한 사진 ${list.length}장의 격자를 없앨까요? 합계는 찍은 점 개수로 셉니다.${typed ? `\n(그중 ${typed}장은 칸마다 직접 입력한 숫자가 있어 그 숫자는 합계에서 빠집니다)` : ''}`)) return;
@@ -1366,6 +1367,7 @@ function updateSide(){
   renderCompareCur(p); if ($('cmpAll').dataset.open) renderCompareAll(); showCal();
   if (!/세는 중/.test($('impInfo').textContent)) $('impInfo').textContent = impText(p);
   $('btnNoGrid').textContent = p.data.noGrid ? '이 판 격자 다시 맞추기' : '이 판 격자 없애기';
+  $('btnNoGridTool').textContent = p.data.noGrid ? '격자 다시 맞추기' : '격자 없애기'; $('btnNoGridTool').classList.toggle('on', !!p.data.noGrid);
   $('btnAutoOne').textContent = hasAuto(p) ? '이 판 자동 계수 지우기' : '이 판 자동 계수';
   $('btnAutoOne').classList.toggle('on', hasAuto(p));
   if (p.data.grid){ $('gAng').value = (p.data.grid.a*180/Math.PI).toFixed(1); $('gSize').value = p.data.grid.size.toFixed(1); }
