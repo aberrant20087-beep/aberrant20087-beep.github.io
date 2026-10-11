@@ -3,8 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+// 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
+// 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
+(function(){
+  var MY = '202610111518';   /*APPVER*/
+  try {
+    if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
+    var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
+    if (code && v > MY){ window.__APP_FROM_STORE = v; document.write(code + '<plaintext style="display:none">'); }
+  } catch(e){}
+})();
+</script>
 <title>격자 콜로니 계수</title>
-<meta name="version" content="202610111505">
+<meta name="version" content="202610111518">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -150,7 +162,7 @@ body.resizing{cursor:col-resize;user-select:none}
   <div class="row"><button id="updFile">받은 업데이트 파일로 바꾸기</button></div>
   <div class="row"><button id="updBack">이전 버전으로 되돌리기</button></div>
   <div id="updMsg" class="muted" style="white-space:pre-line"></div>
-  <div class="muted" style="margin-top:8px">업데이트해도 찍은 점·사진 목록·학습 기준은 그대로 남습니다. 처음 한 번은 지금 쓰고 있는 프로그램 파일을 골라 주셔야 합니다(그 파일을 새 버전으로 바꿔 씀).</div>
+  <div class="muted" style="margin-top:8px">업데이트해도 찍은 점·사진 목록·학습 기준은 그대로 남습니다. 프로그램 파일은 그대로 두고 새 버전을 이 브라우저에 보관해 쓰므로, 파일을 고를 필요가 없습니다.</div>
   <div class="row" style="justify-content:flex-end"><button id="updClose">닫기</button></div>
 </dialog>
 
@@ -1502,37 +1514,42 @@ const updBase = () => { try { return localStorage.getItem(LS_KEY + 'updateBase')
 const verText = v => /^\d{12}$/.test(v) ? `v${v.slice(0,4)}.${v.slice(4,6)}.${v.slice(6,8)} ${v.slice(8,10)}:${v.slice(10,12)}` : /^\d{8}$/.test(v) ? `v${v.slice(0,4)}.${v.slice(4,6)}.${v.slice(6,8)}` : '개발용';
 $('verTag').textContent = `버전 ${verText(APP_VERSION)}`;
 const updMsg = t => { $('updMsg').textContent = t; };
-// 이 프로그램 파일 핸들 (처음 한 번 사용자가 고름 → 브라우저에 기억)
-async function selfHandle(){
-  let h = await idbGet('meta', 'selfHandle');
-  if (h){ try { if (await h.queryPermission({mode: 'readwrite'}) === 'granted' || await h.requestPermission({mode: 'readwrite'}) === 'granted') return h; } catch(e){} }
-  const here = decodeURIComponent(location.pathname.split('/').pop() || '격자 콜로니 계수.html');
-  alert(`처음 한 번만: 지금 쓰고 있는 프로그램 파일을 골라 주세요.\n\n파일 이름: ${here}\n위치: ${decodeURIComponent(location.pathname.replace(/^\//, '').split('/').slice(0, -1).join('\\'))}`);
-  [h] = await window.showOpenFilePicker({ multiple: false, types: [{ description: '격자 콜로니 계수 프로그램', accept: {'text/html': ['.html']} }] });
-  const f = await h.getFile(), t = await f.text();
-  if (!t.includes('격자 콜로니 계수') || !t.includes('id="btnXlsx"')){ alert('격자 콜로니 계수 프로그램 파일이 아닙니다.'); return null; }
-  if (f.name !== here && !confirm(`고른 파일(${f.name})이 지금 열린 프로그램(${here})과 이름이 다릅니다. 그래도 이 파일을 바꿀까요?`)) return null;
-  if (await h.requestPermission({mode: 'readwrite'}) !== 'granted'){ alert('파일을 바꿀 권한을 받지 못했습니다.'); return null; }
-  await idbPut('meta', 'selfHandle', h); return h;
-}
-async function installVersion(text, from){
+// 압축 파일 안에서 바로 연 경우(윈도우가 임시 폴더에 잠깐 풀어 둔 파일): 나중에 지워지므로 작업 저장·업데이트를 하면 안 됨
+const IN_ZIP = /\/AppData\/Local\/Temp\/[^/]*\.zip[^/]*\//i.test(decodeURIComponent(location.pathname));
+if (IN_ZIP){ const b = document.createElement('div');   // 화면 아래에 늘 보이는 경고
+  b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:64px;z-index:30;background:#7a2e1f;color:#fff;padding:8px 16px;border-radius:4px;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.5);max-width:90vw';
+  b.textContent = '⚠ 압축 파일 안에서 바로 연 상태입니다. 이대로 쓰면 작업이 사라질 수 있습니다 — 압축 파일을 「압축 풀기」 한 뒤 풀린 폴더의 프로그램을 여세요.';
+  document.body.appendChild(b); }
+// 새 버전 설치: 프로그램 파일은 그대로 두고, 새 버전 내용을 이 브라우저 저장소에 보관 → 다음에 열 때 맨 위 「업데이트 불러오기」가 그 버전으로 화면을 그림
+// (브라우저가 파일을 직접 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 스마트 앱 컨트롤이 열지 못하게 막음)
+const APP_KEY = 'gridcount:app:';
+function installVersion(text, from){
   const nv = verOf(text);
   if (!text.includes('id="btnXlsx"') || !nv){ alert('격자 콜로니 계수 업데이트 파일이 아닙니다.'); return; }
   if (APP_VERSION !== 'dev' && nv <= APP_VERSION && !confirm(`이 파일(${verText(nv)})은 지금 버전(${verText(APP_VERSION)})보다 새롭지 않습니다. 그래도 바꿀까요?`)) return;
-  if (!window.showOpenFilePicker){   // 파일을 직접 못 바꾸는 브라우저: 새 파일을 내려받아 바꿔 넣도록 안내
-    downloadBlob(new Blob([text], {type: 'text/html'}), '격자 콜로니 계수.html');
-    alert('이 브라우저는 프로그램 파일을 직접 바꿀 수 없어 새 버전을 내려받았습니다. 받은 파일로 지금 프로그램 파일을 덮어쓰세요.'); return; }
+  if (IN_ZIP){ alert('지금 프로그램을 압축 파일 안에서 바로 열었습니다. 이 상태로는 작업 저장과 업데이트가 제대로 되지 않습니다.\n\n압축 파일을 마우스 오른쪽 → 「압축 풀기」로 풀고, 풀린 폴더의 「격자 콜로니 계수.html」을 열어 주세요.'); return; }
   try {
-    const h = await selfHandle(); if (!h) return;
-    await idbPut('meta', 'prevVersion', {ver: APP_VERSION, text: await (await h.getFile()).text(), at: new Date().toISOString()});   // 되돌리기용
-    const w = await h.createWritable(); await w.write(text); await w.close();
-    alert(`${verText(nv)}(으)로 바꿨습니다${from ? ` (${from})` : ''}. 새로고침합니다.`); location.reload();
-  } catch(e){ if (e && e.name === 'AbortError') return; alert('업데이트 실패: ' + (e && e.message || e)); }
+    const prevCode = localStorage.getItem(APP_KEY + 'code'), prevVer = localStorage.getItem(APP_KEY + 'ver');
+    localStorage.setItem(APP_KEY + 'code', text); localStorage.setItem(APP_KEY + 'ver', nv);
+    if (prevCode && prevVer){ localStorage.setItem(APP_KEY + 'prevCode', prevCode); localStorage.setItem(APP_KEY + 'prevVer', prevVer); }
+    else { localStorage.removeItem(APP_KEY + 'prevCode'); localStorage.setItem(APP_KEY + 'prevVer', APP_VERSION); }   // 이전 = 파일 자체 버전
+  } catch(e){ alert('새 버전을 저장하지 못했습니다 (브라우저 저장 공간 부족): ' + (e && e.message || e)); return; }
+  alert(`${verText(nv)}(으)로 바꿨습니다${from ? ` (${from})` : ''}. 새로고침합니다.`); location.reload();
+}
+// 되돌리기: 바로 전 버전으로 (전 버전이 파일 자체 버전이면 저장해 둔 새 버전을 지움)
+function rollbackVersion(){
+  const pc = localStorage.getItem(APP_KEY + 'prevCode'), pv = localStorage.getItem(APP_KEY + 'prevVer');
+  if (!confirm(`이전 버전 ${verText(pv || '')}으로 되돌릴까요?`)) return;
+  if (pc){ localStorage.setItem(APP_KEY + 'code', pc); localStorage.setItem(APP_KEY + 'ver', pv); }
+  else { localStorage.removeItem(APP_KEY + 'code'); localStorage.removeItem(APP_KEY + 'ver'); }
+  localStorage.removeItem(APP_KEY + 'prevCode'); localStorage.removeItem(APP_KEY + 'prevVer');
+  location.href = location.pathname;   // ?original 등 없이 다시 열기
 }
 async function checkOnline(quiet){
   const base = updBase(); if (!base){ if (!quiet) updMsg('업데이트 주소가 아직 정해지지 않았습니다. 배포자에게 받은 업데이트 파일로 바꾸세요.'); return null; }
   try {
-    const j = await (await fetch(base + 'version.json?t=' + Date.now(), {cache: 'no-store'})).json();
+    // update.json: 새 업데이트 방식(브라우저 보관)용. 예전 버전이 보는 version.json 은 그대로 둬서, 예전 버전이 파일을 고쳐 쓰다 차단되는 일을 막음
+    const j = await (await fetch(base + 'update.json?t=' + Date.now(), {cache: 'no-store'})).json();
     const newer = APP_VERSION === 'dev' || j.version > APP_VERSION;
     $('verTag').classList.toggle('new', newer && APP_VERSION !== 'dev'); if (newer && APP_VERSION !== 'dev') $('verTag').textContent = `새 버전 있음 ${verText(j.version)}`;
     if (!quiet) updMsg(newer ? `새 버전 ${verText(j.version)}이 있습니다.\n${j.notes || ''}` : `지금이 최신 버전입니다 (${verText(APP_VERSION)}).`);
@@ -1540,7 +1557,7 @@ async function checkOnline(quiet){
   } catch(e){ if (!quiet) updMsg('새 버전을 확인하지 못했습니다 (인터넷 연결 또는 주소 확인).'); return null; }
 }
 $('btnUpdate').onclick = async () => { $('updVer').textContent = `지금 버전: ${verText(APP_VERSION)}`; updMsg('');
-  $('updCheck').disabled = !updBase(); const prev = await idbGet('meta', 'prevVersion'); $('updBack').disabled = !prev; $('updBack').textContent = prev ? `이전 버전(${verText(prev.ver)})으로 되돌리기` : '이전 버전으로 되돌리기';
+  $('updCheck').disabled = !updBase(); const pv = localStorage.getItem(APP_KEY + 'prevVer'); $('updBack').disabled = !pv; $('updBack').textContent = pv ? `이전 버전(${verText(pv)})으로 되돌리기` : '이전 버전으로 되돌리기';
   $('updDlg').showModal(); };
 $('updClose').onclick = () => $('updDlg').close();
 $('updCheck').onclick = async () => { updMsg('확인 중…'); const j = await checkOnline(false); if (!j) return;
@@ -1548,9 +1565,8 @@ $('updCheck').onclick = async () => { updMsg('확인 중…'); const j = await c
   try { const t = await (await fetch(updBase() + encodeURIComponent(j.file || '격자 콜로니 계수.html') + '?t=' + Date.now(), {cache: 'no-store'})).text(); await installVersion(t, '인터넷'); }
   catch(e){ updMsg('새 버전을 받지 못했습니다: ' + (e && e.message || e)); } };
 $('updFile').onclick = () => $('updIn').click();
-$('updIn').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (f) await installVersion(await f.text(), f.name); };
-$('updBack').onclick = async () => { const prev = await idbGet('meta', 'prevVersion'); if (!prev) return;
-  if (!confirm(`이전 버전 ${verText(prev.ver)}으로 되돌릴까요?`)) return; await installVersion(prev.text, '되돌리기'); };
+$('updIn').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (f) installVersion(await f.text(), f.name); };
+$('updBack').onclick = () => rollbackVersion();
 // 하루 한 번 조용히 새 버전 확인 (주소가 정해져 있을 때만)
 (() => { try { const k = LS_KEY + 'updChecked', today = new Date().toISOString().slice(0, 10); if (updBase() && localStorage.getItem(k) !== today){ localStorage.setItem(k, today); checkOnline(true); } } catch(e){} })();
 
