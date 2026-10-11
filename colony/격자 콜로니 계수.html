@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610111553';   /*APPVER*/
+  var MY = '202610111554';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -16,7 +16,7 @@
 })();
 </script>
 <title>격자 콜로니 계수</title>
-<meta name="version" content="202610111553">
+<meta name="version" content="202610111554">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -138,10 +138,6 @@ dialog#updDlg h3{font:800 16px var(--serif);color:var(--accent);margin:0 0 6px}
 .upd{display:flex;flex-direction:column;align-items:center;line-height:1.2}
 #verTag{font-size:10.5px;color:var(--muted);margin-top:2px;white-space:nowrap}
 #verTag.new{color:#ff8a6b;font-weight:700}
-/* 전체화면: 머리줄·좌우 메뉴를 숨기고 사진만 */
-body.focus{grid-template-columns:1fr;grid-template-rows:1fr}
-body.focus #stage{grid-column:1;grid-row:1}
-body.focus header,body.focus #list,body.focus #side,body.focus .split{display:none}
 /* 좌우 메뉴 폭 조절 손잡이 (경계선을 끌기, 두 번 클릭 = 원래 폭) */
 .split{position:fixed;width:8px;cursor:col-resize;z-index:20;background:transparent;transition:background .15s}
 .split:hover,.split.drag{background:rgba(201,164,92,.35)}
@@ -158,6 +154,7 @@ body.resizing{cursor:col-resize;user-select:none}
   <span class="muted" id="status"></span>
   <span class="muted" id="saveState" title="점을 찍을 때마다 이 브라우저에 자동 저장됩니다. 같은 회차·같은 사진을 다시 열면 이어서 작업합니다."></span>
   <span style="flex:1"></span>
+  <button id="btnFull" title="프로그램 전체화면: 브라우저 주소창·탭을 숨기고 이 프로그램만 화면 가득 (다시 누르거나 Esc / F11 = 원래대로)">⛶ 전체화면</button>
   <button id="btnXlsx" class="primary" title="요약·칸별 개수·점 좌표를 엑셀 파일(.xlsx)로 저장">엑셀 시트 만들기</button>
   <span class="upd"><button id="btnUpdate" title="새 버전 확인·업데이트">업데이트</button><span id="verTag"></span></span>
   <input id="updIn" type="file" accept=".html,text/html" hidden>
@@ -183,7 +180,7 @@ body.resizing{cursor:col-resize;user-select:none}
 
 <div id="stage">
   <canvas id="cv"></canvas>
-  <div id="tools"><div class="seg"><button id="btnDoneTool" title="이 사진 계수 완료 표시/취소 (C)">✔ 계수 완료 <kbd>C</kbd></button></div><div class="seg"><button id="btnAlignGrid" title="사진을 돌려 인쇄 격자를 가로·세로로 반듯하게 (판마다 자동, 점도 함께 돎)">⊞ 격자 수직 <kbd>R</kbd></button><button id="btnRotL" title="왼쪽으로 90° 돌리기">↺</button><button id="btnRotR" title="오른쪽으로 90° 돌리기">↻</button><button id="btnNoGridTool" title="이 판의 격자와 막 테두리 원을 없애기 / 다시 표시 (없으면 합계 = 찍은 점 개수)">격자·원 없애기</button></div><div class="seg"><button id="btnFit" title="막 전체 보기">전체 <kbd>F</kbd></button><button id="btnZoomIn" title="확대">＋</button><button id="btnZoomOut" title="축소">－</button><button id="btnFull" title="전체화면: 좌우 메뉴를 숨기고 사진만 화면 가득 (다시 누르거나 Esc = 원래대로)">⛶ 전체화면</button></div><div class="seg dotsz"><span title="[ / ] 키로도 조절">점</span><input id="dotSize" type="range" min="1.5" max="12" step="0.5" title="점 크기 ( [ / ] 키)"><b id="dotSizeVal"></b><span>숫자</span><input id="numSize" type="range" min="0.08" max="0.3" step="0.01" title="칸 숫자 크기"><b id="numSizeVal"></b></div></div>
+  <div id="tools"><div class="seg"><button id="btnDoneTool" title="이 사진 계수 완료 표시/취소 (C)">✔ 계수 완료 <kbd>C</kbd></button></div><div class="seg"><button id="btnAlignGrid" title="사진을 돌려 인쇄 격자를 가로·세로로 반듯하게 (판마다 자동, 점도 함께 돎)">⊞ 격자 수직 <kbd>R</kbd></button><button id="btnRotL" title="왼쪽으로 90° 돌리기">↺</button><button id="btnRotR" title="오른쪽으로 90° 돌리기">↻</button><button id="btnNoGridTool" title="이 판의 격자와 막 테두리 원을 없애기 / 다시 표시 (없으면 합계 = 찍은 점 개수)">격자·원 없애기</button></div><div class="seg"><button id="btnFit" title="막 전체 보기">전체 <kbd>F</kbd></button><button id="btnZoomIn" title="확대">＋</button><button id="btnZoomOut" title="축소">－</button></div><div class="seg dotsz"><span title="[ / ] 키로도 조절">점</span><input id="dotSize" type="range" min="1.5" max="12" step="0.5" title="점 크기 ( [ / ] 키)"><b id="dotSizeVal"></b><span>숫자</span><input id="numSize" type="range" min="0.08" max="0.3" step="0.01" title="칸 숫자 크기"><b id="numSizeVal"></b></div></div>
   <input id="entry" type="text" inputmode="numeric" autocomplete="off">
   <div id="drop">위의 「사진 열기」로 사진을 고르거나 (여러 장 가능),<br>사진·폴더를 여기로 끌어다 놓으세요.</div>
   <div id="hint"></div>
@@ -1678,18 +1675,10 @@ $('updBack').onclick = () => rollbackVersion();
   apply();
 })();
 
-// ---------- 전체화면: 브라우저 전체화면 + 좌우 메뉴 숨김 (Esc 또는 버튼 다시 = 원래대로) ----------
-function setFocusMode(on){
-  document.body.classList.toggle('focus', on); $('btnFull').classList.toggle('on', on); $('btnFull').textContent = on ? '⛶ 원래 화면' : '⛶ 전체화면';
-  resize(); const p = cur(); if (p && p.img){ fitView(); draw(); }
-}
-$('btnFull').onclick = async () => {
-  const on = !document.body.classList.contains('focus');
-  if (on){ try { if (!document.fullscreenElement) await document.documentElement.requestFullscreen(); } catch(e){} setFocusMode(true); }
-  else { setFocusMode(false); try { if (document.fullscreenElement) await document.exitFullscreen(); } catch(e){} }
-};
-document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && document.body.classList.contains('focus')) setFocusMode(false); });
-
+// ---------- 전체화면: 브라우저 주소창·탭을 숨기고 프로그램만 화면 가득 (메뉴는 그대로). 다시 누르거나 Esc/F11 = 원래대로 ----------
+const fsLabel = () => { const on = !!document.fullscreenElement; $('btnFull').classList.toggle('on', on); $('btnFull').textContent = on ? '⛶ 전체화면 끝' : '⛶ 전체화면'; };
+$('btnFull').onclick = async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); } catch(e){ alert('전체화면으로 바꾸지 못했습니다. 키보드 F11 을 눌러 보세요.'); } };
+document.addEventListener('fullscreenchange', () => { fsLabel(); resize(); });
 $('trashClose').onclick = () => $('trashDlg').close();
 $('trashRestore').onclick = async () => { const ids = trashSel(); if (!ids.length) return alert('복원할 사진을 체크하세요.'); const n = await restoreTrash(ids); $('trashDlg').close(); $('status').textContent = `빼낸 사진 ${n}장 복원`; };
 $('trashPurge').onclick = async () => { const ids = trashSel(); if (!ids.length) return alert('지울 사진을 체크하세요.');
