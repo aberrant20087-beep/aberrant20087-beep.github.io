@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610111554';   /*APPVER*/
+  var MY = '202610111603';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -16,7 +16,7 @@
 })();
 </script>
 <title>격자 콜로니 계수</title>
-<meta name="version" content="202610111554">
+<meta name="version" content="202610111603">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -460,7 +460,7 @@ function openPlate(i){
   S.plates.forEach(q => { if (q !== p && q.img){ q.img = null; q.lod = null; } });
   if (!p.img){
     const url = URL.createObjectURL(p.file); const im = new Image();
-    im.onload = () => { p.img = im; if (!p.data.circle) guessCircle(p); fitView(); draw(); };
+    im.onload = () => { p.img = im; if (!p.data.circle) guessCircle(p); else recheckCircle(p); fitView(); draw(); updateSide(); };
     im.src = url;
   } else { fitView(); draw(); }
   renderList(); updateSide();
@@ -469,6 +469,13 @@ function cur(){ return S.plates[S.cur]; }
 
 // ---------- 기하 ----------
 // 판을 처음 열면 막 원은 자동 검출, 격자는 앞 판 것을 복사 (위치가 다르면 「정렬 미세조정」)
+// 예전 버전이 막을 잘못 잡았을 수 있는 판(자동 신뢰도 0.7 미만): 새 방식으로 한 번 다시 찾아 더 확실하면 바꿈 (격자도 다시 맞춤)
+function recheckCircle(p){
+  const d = p.data; if (d.circleV2 || d.circleAuto === undefined || d.circleAuto >= 0.7) return;
+  d.circleV2 = true;
+  try { const c = findMembrane(p.img); if (c.support > d.circleAuto + 0.05){ d.circle = {cx: c.cx, cy: c.cy, r: c.r}; d.circleAuto = c.support; if (d.gridAuto !== undefined && !d.noGrid){ d.grid = null; autoGrid(p); } } } catch(e){}
+  save(p);
+}
 function guessCircle(p){
   try { const c = findMembrane(p.img); p.data.circle = {cx:c.cx, cy:c.cy, r:c.r}; p.data.circleAuto = c.support; } catch(e){}
   if (!p.data.grid && !p.data.noGrid){ if (S.noGridNew) p.data.noGrid = true; else autoGrid(p); }
@@ -890,7 +897,7 @@ const erode = (a,w,h,s) => minMax(a,w,h,s,true), dilate = (a,w,h,s) => minMax(a,
 // 막 원: 밝은 무채색(막) - 노란 한천 경계의 기울기 방향 Hough (1/4 축소)
 // 사진에서 막이 작게 찍힌 경우(기본)로 먼저 찾고, 잘 안 맞으면 막만 크게 잘라 낸 사진으로 보고 다시 찾음
 function findMembrane(img){
-  const a = findMembraneR(img, AC.rMinF, AC.rMaxF); if (a.support >= 0.45) return a;
+  const a = findMembraneR(img, AC.rMinF, AC.rMaxF); if (a.support >= 0.7) return a;   // 확실하면 그대로 (일반 사진은 0.8~1.0)
   const b = findMembraneR(img, 0.3, 0.52); return b.support > a.support ? b : a;
 }
 function findMembraneR(img, rMinF, rMaxF){
@@ -1092,9 +1099,10 @@ async function autoCount(p, force){
 const rgb2hsv = (r, g, b) => { const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; let h = 0;
   if (d){ h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; if (h < 0) h += 360; }
   return {h, s: mx ? d / mx : 0, v: mx, d}; };
+const isPenHue = h => h >= 190 && h <= 285;   // 파랑~보라: 펜 글씨 색
 const hueDist = (a, b) => { const x = Math.abs(a - b) % 360; return x > 180 ? 360 - x : x; };
 function impRegion(p){ const W = p.img.naturalWidth, H = p.img.naturalHeight, c = p.data.circle;
-  if (!c || (p.data.circleAuto !== undefined && p.data.circleAuto < 0.35)) return {x0: 0, y0: 0, w: W, h: H, inside: () => true};
+  if (!c || (p.data.circleAuto !== undefined && p.data.circleAuto < 0.8)) return {x0: 0, y0: 0, w: W, h: H, inside: () => true};
   const R = c.r * 1.03, x0 = Math.max(0, Math.floor(c.cx - R)), y0 = Math.max(0, Math.floor(c.cy - R));
   return {x0, y0, w: Math.min(W, Math.ceil(c.cx + R)) - x0, h: Math.min(H, Math.ceil(c.cy + R)) - y0, inside: (x, y) => (x - c.cx) ** 2 + (y - c.cy) ** 2 <= R * R}; }
 function findMarkers(p, target){
@@ -1104,7 +1112,7 @@ function findMarkers(p, target){
   for (let i = 0, y = 0; y < R.h; y++) for (let x = 0; x < R.w; x++, i++){ const q = rgb2hsv(d[4*i], d[4*i+1], d[4*i+2]); H[i] = q.h; Sv[i] = q.d >= 60 ? q.s : 0; V[i] = q.v; IN[i] = R.inside(x + R.x0, y + R.y0) ? 1 : 0; }
   if (!target){   // 진한 색 후보(색상 분포의 봉우리) 몇 개를 다 세어 보고, 크기가 고른 표시가 가장 많이 나온 색을 고름
     const bins = new Float32Array(36); let tot = 0;
-    for (let i = 0; i < n; i++) if (IN[i] && Sv[i] >= 0.7 && V[i] >= 110 && !(H[i] >= 25 && H[i] <= 75)){ bins[Math.floor(H[i] / 10) % 36]++; tot++; }   // 노랑~주황(콜로니·한천 색)은 자동 후보에서 뺌 → 그런 색 표시는 「색 찍어서 세기」
+    for (let i = 0; i < n; i++) if (IN[i] && Sv[i] >= 0.7 && V[i] >= 110 && !(H[i] >= 25 && H[i] <= 75) && !(H[i] >= 190 && H[i] <= 285)){ bins[Math.floor(H[i] / 10) % 36]++; tot++; }   // 파랑~보라(펜 글씨)도 자동 후보에서 뺌 → 그런 색 표시는 「색 찍어서 세기」   // 노랑~주황(콜로니·한천 색)은 자동 후보에서 뺌 → 그런 색 표시는 「색 찍어서 세기」
     const sm = k => bins[k] + bins[(k+35)%36]*.5 + bins[(k+1)%36]*.5, cand = [];
     for (const k of [...Array(36).keys()].sort((a, b) => sm(b) - sm(a))) if (bins[k] >= 20 && cand.every(c => hueDist(c*10, k*10) > 30) && cand.length < 3) cand.push(k);
     if (tot < 30 || !cand.length) return {error: '진한 색 표시를 찾지 못했습니다. 「색 찍어서 세기」로 표시 하나를 클릭해 보세요.'};
@@ -1155,7 +1163,7 @@ function segmentMarkers(R, n, H, Sv, V, IN, target){
 function applyImport(p, res){
   const now = Date.now();
   p.data.marks = (p.data.marks || []).filter(k => !k.imp).concat(res.pts.map(q => ({x: Math.round(q.x), y: Math.round(q.y), r: 0, manual: true, imp: true, t: now})));
-  p.data.imp = {n: res.pts.length, merged: res.merged, long: res.long, at: new Date().toISOString(), h: Math.round(res.target.h)};
+  p.data.imp = {n: res.pts.length, merged: res.merged, long: res.long, picked: !!res.target.picked, at: new Date().toISOString(), h: Math.round(res.target.h)};
   if (!p.data.grid) autoGrid(p);
   save(p);
 }
@@ -1168,7 +1176,9 @@ async function runImport(target){
   for (let i = 0; i < list.length; i++){ const p = list[i];
     $('impInfo').textContent = `표시 세는 중 ${i+1}/${list.length} — ${p.name}`; await yieldUI();
     await ensureCircle(p); const r = findMarkers(p, target);
-    if (r.error) bad.push(`${p.name}: ${r.error}`); else { applyImport(p, r); ok++; }
+    if (r.error){ bad.push(`${p.name}: ${r.error}`);
+      if (p.data.imp && isPenHue(p.data.imp.h) && !p.data.imp.picked){ p.data.marks = (p.data.marks || []).filter(k => !k.imp); p.data.imp = null; save(p); } }   // 예전에 펜 글씨를 잘못 센 보라 점은 지움
+    else { applyImport(p, r); ok++; }
     if (p !== cur()) { p.img = null; p.lod = null; } }
   $('impInfo').textContent = list.length === 1 ? (bad[0] || impText(list[0])) : `${ok}장 셈${bad.length ? ` · 못 센 사진 ${bad.length}장: ${bad.join(' / ')}` : ''}`;
   updateSide(); renderList(); draw();
@@ -1180,7 +1190,7 @@ function impFromPick(p, pt){
   const d = g.getImageData(0, 0, 7, 7).data; let best = null;
   for (let i = 0; i < 49; i++){ const q = rgb2hsv(d[4*i], d[4*i+1], d[4*i+2]); if (!best || q.d > best.d) best = q; }
   if (!best || best.d < 40){ $('impInfo').textContent = '클릭한 곳에 진한 색이 없습니다. 표시의 선(색이 진한 부분)을 정확히 클릭하세요.'; draw(); return; }
-  S.impColor = {h: best.h, s: best.s, v: best.v}; runImport(S.impColor);
+  S.impColor = {h: best.h, s: best.s, v: best.v, picked: true}; runImport(S.impColor);
 }
 $('btnImpAuto').onclick = () => runImport(null);
 $('btnImpPick').onclick = () => { if (!cur() || !cur().img) return; closeEntry(false); S.mode = S.mode === 'pickColor' ? 'mark' : 'pickColor'; setModeButtons(); draw(); };
@@ -1242,6 +1252,12 @@ const activeParams = () => { const P = S.autoParams; return P && P.v >= 3 && P.m
 S.train = { samples: {}, log: [] };
 async function loadTrain(){ const v = await idbGet('meta', 'trainSet'); if (v && v.samples) S.train = v; showCal(); }
 // 학습 자료 정리: 다른 프로그램 표시가 그려진 판에서 만든 자료는 빼고 다시 학습 (그런 자료로 맞춘 모델이 빈 곳에 점을 찍음)
+// 예전 버전이 날짜 등 펜 글씨(파랑)를 표시 점으로 잘못 센 판 정리 (색 찍기로 일부러 고른 경우는 그대로)
+function cleanPenImports(){
+  const bad = S.plates.filter(p => p.data.imp && isPenHue(p.data.imp.h) && !p.data.imp.picked);
+  for (const p of bad){ p.data.marks = (p.data.marks || []).filter(k => !k.imp); p.data.imp = null; save(p); }
+  if (bad.length){ renderList(); updateSide(); draw(); $('status').textContent = `날짜 등 펜 글씨를 표시 점으로 잘못 센 판 ${bad.length}장의 보라 점을 지웠습니다`; }
+}
 async function cleanTrain(){
   const bad = Object.keys(S.train.samples).filter(id => { const p = S.plates.find(q => trainId(q) === id); return (p && hasImp(p)) || /빨간점|확대본/.test(id); });
   if (!bad.length) return;
@@ -1685,7 +1701,7 @@ $('trashPurge').onclick = async () => { const ids = trashSel(); if (!ids.length)
   if (!confirm(`체크한 ${ids.length}장을 보관함에서 완전히 지울까요? 다시 복원할 수 없습니다 (찍은 점 기록은 남아, 같은 사진을 다시 열면 이어집니다).`)) return; await purgeTrash(ids); openTrash(); };
 
 resize(); setModeButtons(); updateHint();
-restoreSession().then(() => loadTrain()).then(cleanTrain);   // 새로고침 전에 열어 둔 사진 목록·보던 사진·회차 복원
+restoreSession().then(() => { cleanPenImports(); return loadTrain(); }).then(cleanTrain);   // 새로고침 전에 열어 둔 사진 목록·보던 사진·회차 복원
 loadTrain();
 </script>
 </body>
