@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610111542';   /*APPVER*/
+  var MY = '202610111553';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -16,7 +16,7 @@
 })();
 </script>
 <title>격자 콜로니 계수</title>
-<meta name="version" content="202610111542">
+<meta name="version" content="202610111553">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -129,6 +129,9 @@ kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:3px;paddi
 .ncbox{border:1px solid var(--rule);border-radius:4px;padding:6px 8px;margin:4px 0 8px;background:#1b1d21}.ncbox .row{margin:3px 0}
 .cmpt th{font-weight:400;color:var(--muted);text-align:right;padding:3px 4px;border-bottom:1px solid var(--rule)}.cmpt th:first-child{text-align:left}
 .cmpt td:not(:first-child){text-align:right;font-variant-numeric:tabular-nums}.cmpt tr.tot td{border-top:1px solid var(--rule);color:var(--accent);font-weight:700}
+dialog#trashDlg{background:var(--panel);color:var(--text);border:1px solid var(--accent);border-radius:6px;padding:14px 18px;width:520px;max-width:92vw}
+dialog#trashDlg::backdrop{background:rgba(0,0,0,.55)}
+dialog#trashDlg h3{font:800 16px var(--serif);color:var(--accent);margin:0 0 6px}
 dialog#updDlg{background:var(--panel);color:var(--text);border:1px solid var(--accent);border-radius:6px;padding:14px 18px;width:420px;max-width:92vw}
 dialog#updDlg::backdrop{background:rgba(0,0,0,.55)}
 dialog#updDlg h3{font:800 16px var(--serif);color:var(--accent);margin:0 0 6px}
@@ -168,6 +171,12 @@ body.resizing{cursor:col-resize;user-select:none}
   <div id="updMsg" class="muted" style="white-space:pre-line"></div>
   <div class="muted" style="margin-top:8px">업데이트해도 찍은 점·사진 목록·학습 기준은 그대로 남습니다. 프로그램 파일은 그대로 두고 새 버전을 이 브라우저에 보관해 쓰므로, 파일을 고를 필요가 없습니다.</div>
   <div class="row" style="justify-content:flex-end"><button id="updClose">닫기</button></div>
+</dialog>
+<dialog id="trashDlg">
+  <h3>빼낸 사진 복원</h3>
+  <div class="muted">목록에서 뺀 사진입니다. 복원하면 찍은 점·빗금 기록도 그대로 돌아옵니다.</div>
+  <div id="trashList" style="max-height:50vh;overflow:auto;margin:8px 0;font-size:13px"></div>
+  <div class="row"><button id="trashRestore" class="primary">체크한 사진 복원</button><button id="trashPurge" title="보관함에서 사진을 완전히 지웁니다 (찍은 점 기록은 남음)">보관함에서 지우기</button><span style="flex:1"></span><button id="trashClose">닫기</button></div>
 </dialog>
 
 <div id="list"></div>
@@ -260,9 +269,10 @@ const $ = id => document.getElementById(id);
 // 판 구분: 폴더(상위/하위)에 든 사진은 「폴더 경로 + 파일명」, 폴더 없이 연 사진은 예전처럼 「회차 + 파일명」으로 저장
 // (날짜·구역별 폴더마다 같은 파일명이 있어도 서로 섞이지 않게)
 const plateId = (group, name) => group ? group + '/' + name : name;
-function plateKey(p){ return p.group ? LS_KEY + 'g:' + p.group + '|' + p.name : LS_KEY + ($('round').value || '') + '|' + p.name; }
+function plateKey(p){ return p.group ? LS_KEY + 'g:' + p.group + '|' + p.name : LS_KEY + (p.rk !== undefined ? p.rk : ($('round').value || '')) + '|' + p.name; }
 // 폴더 경로에서 회차 이름 (예: 261008_Phase1_11회차 → 11회차). 없으면 위의 「회차」 칸
-const roundOf = p => { const m = (p.group || '').match(/(\d+회차)/); return m ? m[1] : ($('round').value || ''); };
+const roundIn = p => { const m = ((p.group || '') + ' ' + (p.name || '')).match(/(\d+)\s*회차/); return m ? m[1] + '회차' : ''; };   // 폴더·파일 이름 속 「N회차」
+const roundOf = p => roundIn(p) || (p.rk !== undefined ? p.rk : ($('round').value || ''));
 const groupParts = p => { const g = (p.group || '').split('/').filter(Boolean); return { top: g[0] || '', sub: g.slice(1).join('/') }; };
 function blankData(){ return { circle:null, grid:null, cells:{}, done:false, marks:null, auto:null }; }
 // ---------- 직접(클릭) 점 ↔ 자동 점 일치 판정 ----------
@@ -330,15 +340,41 @@ async function idbGet(store, key){ try { const db = await idbOpen(); return awai
 async function idbClear(){ try { const db = await idbOpen(); await new Promise(res => { const tx = db.transaction(['photos','meta'], 'readwrite'); tx.objectStore('photos').clear(); tx.objectStore('meta').clear(); tx.oncomplete = res; }); } catch(e){} }
 async function idbDel(store, key){ try { const db = await idbOpen(); await new Promise(res => { const tx = db.transaction(store, 'readwrite'); tx.objectStore(store).delete(key); tx.oncomplete = res; tx.onerror = res; }); } catch(e){} }
 function saveSession(){ idbPut('meta', 'session', { round: $('round').value, items: S.plates.map(p => ({name: p.name, group: p.group || ''})), cur: cur() ? cur().id : null, collapsed: [...S.collapsed] }); }
-// 목록에서 사진 빼기: 목록·새로고침용 보관 사진만 지움. 찍은 점 기록(localStorage)은 남겨 다시 열면 복원
+// 목록에서 사진 빼기: 사진은 「빼낸 사진」 보관함으로 옮김(「빼낸 사진 복원」으로 되살림). 찍은 점 기록(localStorage)은 그대로
+async function getTrash(){ return (await idbGet('meta', 'trash')) || []; }
 async function removePlates(ids){
-  const curId = cur() ? cur().id : null, set = new Set(ids);
-  for (const n of ids){ await idbDel('photos', n); S.checked.delete(n); }
+  const curId = cur() ? cur().id : null, set = new Set(ids), trash = await getTrash(), at = new Date().toISOString();
+  for (const n of ids){ const p = S.plates.find(q => q.id === n);
+    const blob = (await idbGet('photos', n)) || (p && p.file);
+    if (blob && p){ await idbPut('photos', 'trash:' + n, blob); const i = trash.findIndex(t => t.id === n); if (i >= 0) trash.splice(i, 1); trash.push({id: n, name: p.name, group: p.group || '', at}); }
+    await idbDel('photos', n); S.checked.delete(n); }
+  await idbPut('meta', 'trash', trash);
   S.plates = S.plates.filter(p => !set.has(p.id)); S.ncPts = null;
   if (!S.plates.length){ S.cur = -1; $('drop').style.display = ''; renderList(); draw(); saveSession(); return; }
   const keep = S.plates.findIndex(p => p.id === curId);
   S.cur = -1; renderList(); openPlate(keep >= 0 ? keep : 0);
 }
+// 빼낸 사진 되살리기 / 보관함에서 지우기
+async function restoreTrash(ids){
+  const trash = await getTrash(), list = [];
+  for (const t of trash.filter(t => ids.includes(t.id))){ const b = await idbGet('photos', 'trash:' + t.id);
+    if (b) list.push({file: b instanceof File ? new File([b], t.name, {type: b.type || 'image/jpeg'}) : new File([b], t.name, {type: b.type || 'image/jpeg'}), group: t.group}); }
+  if (list.length) addFiles(list);   // 찍은 점은 저장된 기록에서 그대로 이어짐
+  for (const id of ids) await idbDel('photos', 'trash:' + id);
+  await idbPut('meta', 'trash', trash.filter(t => !ids.includes(t.id)));
+  return list.length;
+}
+async function purgeTrash(ids){ const trash = await getTrash(); for (const id of ids) await idbDel('photos', 'trash:' + id); await idbPut('meta', 'trash', trash.filter(t => !ids.includes(t.id))); }
+async function openTrash(){
+  const trash = (await getTrash()).slice().reverse(), el = $('trashList');
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+  el.innerHTML = trash.length ? `<label class="muted" style="display:block;margin:4px 0"><input type="checkbox" id="trashAll"> 전체 선택</label>` + trash.map(t =>
+    `<label style="display:flex;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid #2b2f35"><input type="checkbox" data-tid="${esc(t.id)}"><span style="flex:1">${esc(t.group ? t.group + ' › ' : '')}${esc(t.name)}</span><small class="muted">${localTime(t.at)}</small></label>`).join('')
+    : '<div class="muted">빼낸 사진이 없습니다.</div>';
+  const all = $('trashAll'); if (all) all.onchange = () => el.querySelectorAll('input[data-tid]').forEach(c => c.checked = all.checked);
+  $('trashDlg').showModal();
+}
+const trashSel = () => [...$('trashList').querySelectorAll('input[data-tid]:checked')].map(c => c.dataset.tid);
 async function restoreSession(){
   const ncb = await idbGet('meta', 'ncPhoto'); if (ncb) setNcFile(ncb instanceof File ? ncb : new File([ncb], 'N.C.jpg', {type: ncb.type || 'image/jpeg'}), true);
   const m = await idbGet('meta', 'session'); if (!m) return;
@@ -369,7 +405,7 @@ function addFiles(list, restoring){
     const old = S.plates.find(p => p.id === id);
     if (!restoring) idbPut('photos', id, f);     // 새로고침해도 다시 열 수 있게 사진 보관
     if (old){ old.file = f; old.img = null; old.lod = null; continue; }
-    const p = { file:f, name, group, id, ...parseName(f.name), img:null, data:null }; p.data = load(p); S.plates.push(p);
+    const p = { file:f, name, group, id, rk: group ? undefined : ($('round').value || ''), ...parseName(f.name), img:null, data:null }; p.data = load(p); S.plates.push(p);
   }
   sortPlates();
   S.ncPts = null; $('drop').style.display = 'none';
@@ -415,12 +451,14 @@ async function moveToGroup(ids, group){
   renderList(); updateSide(); saveSession();
   if (skip.length) alert(`옮긴 사진 ${n}장. 그 폴더에 같은 이름이 이미 있어 옮기지 않은 사진: ${skip.join(', ')}`);
 }
-$('round').addEventListener('change', () => { S.plates.forEach(p => p.data = load(p)); renderList(); draw(); saveSession(); });
+$('round').addEventListener('change', () => { const r = $('round').value || ''; S.plates.forEach(p => { if (!p.group && !roundIn(p)){ p.rk = r; p.data = load(p); } }); renderList(); updateSide(); draw(); saveSession(); });
 
 function openPlate(i){
   if (i < 0 || i >= S.plates.length) return;
   closeEntry(false);
-  S.cur = i; const p = S.plates[i]; S.sel = null; S.mode = 'mark'; S.pick = []; saveSession();
+  S.cur = i; const p = S.plates[i]; S.sel = null; S.mode = 'mark'; S.pick = [];
+  { const r = roundIn(p); if (r && $('round').value !== r) $('round').value = r; }   // 회차 칸 = 지금 사진의 회차 (폴더·파일 이름에서)
+  saveSession();
   // 메모리 절약: 다른 판의 풀린 사진(장당 약 50MB)은 내려놓음 (필요하면 다시 읽음)
   S.plates.forEach(q => { if (q !== p && q.img){ q.img = null; q.lod = null; } });
   if (!p.img){
@@ -1216,7 +1254,7 @@ async function cleanTrain(){
   $('learnState').textContent = `다른 프로그램 표시가 그려진 판 ${bad.length}개를 학습 자료에서 뺐습니다${Object.keys(S.train.samples).length ? ' (남은 자료로 다시 학습)' : ' — 남은 자료가 없어 기본 기준으로 셉니다'}.`;
 }
 function saveTrain(){ return idbPut('meta', 'trainSet', S.train); }
-const trainId = p => p.group ? `g:${p.group}|${p.name}` : `${$('round').value || ''}|${p.name}`;
+const trainId = p => p.group ? `g:${p.group}|${p.name}` : `${p.rk !== undefined ? p.rk : ($('round').value || '')}|${p.name}`;
 function paramText(P){ if (!P) return '기본값 (가장 넓게 셈)'; if (P.v >= 3 && P.model) return `학습 모델 (특징 ${P.model.w.length}개 · 콜로니 확률 ${Math.round(P.model.thr * 100)}% 이상만 셈)`; const bx = P.brightExtra ?? (P.noBright ? BRIGHT_OFF : 0);
   return `최소 진하기 ${P.minPeak} · 최소 크기 ${P.minArea}px · 밝은 흰 점 ${bx >= BRIGHT_OFF ? '세지 않음' : bx ? `진하기 +${bx} 이상만` : '같은 기준'} · N.C 기준 ${P.useNC ? '사용' : '안 씀'}${P.allowReflect ? ' · 반사 판정 점도 셈' : ''}`; }
 // 판 하나를 학습 자료로 (자동 계수 후보 점은 가장 넓은 기준으로 찾아 둠)
@@ -1389,7 +1427,9 @@ function renderList(){
          +  `<td class="n">${has(p) ? t.sum : '–'}${isNC ? ' <span class="muted">대조</span>' : ''}</td><td class="dn"><button class="donebtn${p.data.done ? ' on' : ''}" data-done="${i}" title="${p.data.done ? '완료 취소' : '계수 완료 표시'}">${p.data.done ? '✔' : ''}</button></td></tr>`;
   });
   html += `</tbody></table><div class="lsum"><div class="muted">계수한 판 ${counted} / ${S.plates.length} · 완료 ${S.plates.filter(p => p.data.done).length}</div></div>`;
-  $('list').innerHTML = S.plates.length ? html : '';
+  $('list').innerHTML = S.plates.length ? html : '<div class="lsum"><div class="muted">열린 사진이 없습니다.</div></div>';
+  { const tb = document.createElement('button'); tb.textContent = '빼낸 사진 복원'; tb.title = '목록에서 뺀 사진을 다시 목록에 넣습니다'; tb.style.cssText = 'font-size:11px;padding:2px 8px;margin-top:6px';
+    tb.onclick = openTrash; const ls = $('list').querySelector('.lsum'); if (ls) ls.appendChild(tb); }
   $('list').querySelectorAll('tr[data-i]').forEach(tr => tr.onclick = e => { if (e.target.matches('input[type=checkbox], button')) return; openPlate(+tr.dataset.i); });
   $('list').querySelectorAll('tr.grp').forEach(tr => tr.onclick = e => { if (e.target.matches('input[type=checkbox]')) return; const g = tr.dataset.g; S.collapsed.has(g) ? S.collapsed.delete(g) : S.collapsed.add(g); saveSession(); renderList(); });
   $('list').querySelectorAll('input[data-gck]').forEach(ck => ck.onchange = () => { const g = ck.dataset.gck; S.plates.filter(q => inG(q, g)).forEach(q => ck.checked ? S.checked.add(q.id) : S.checked.delete(q.id)); renderList(); });
@@ -1409,7 +1449,7 @@ function renderList(){
     const del = btn('btnDelChecked', '체크한 사진 빼기', '체크한 사진을 목록에서 뺍니다 (원본 파일은 그대로, 찍은 점은 남아 같은 사진을 다시 열면 복원)');
     del.onclick = async () => { const ids = checkedIds();
       if (!ids.length) return alert('뺄 사진을 왼쪽 체크칸으로 고르세요.');
-      if (!confirm(`체크한 사진 ${ids.length}장을 목록에서 뺄까요?\n\n${ids.slice(0, 30).map(n => '· ' + n).join('\n')}${ids.length > 30 ? `\n… 외 ${ids.length - 30}장` : ''}\n\n원본 파일은 지워지지 않고, 찍은 점은 남아 있어 같은 사진을 다시 열면 복원됩니다.`)) return;
+      if (!confirm(`체크한 사진 ${ids.length}장을 목록에서 뺄까요?\n\n${ids.slice(0, 30).map(n => '· ' + n).join('\n')}${ids.length > 30 ? `\n… 외 ${ids.length - 30}장` : ''}\n\n뺀 사진은 목록 아래 「빼낸 사진 복원」에서 다시 넣을 수 있고, 찍은 점도 그대로 남습니다.`)) return;
       await removePlates(ids); };
     const clr = btn('', '목록 비우기', '열어 둔 사진 목록을 모두 닫습니다 (찍은 점은 남아 같은 사진을 다시 열면 복원)');
     clr.onclick = async () => { if (!confirm('사진 목록을 모두 비울까요? 찍은 점은 지워지지 않습니다.')) return; await removePlates(S.plates.map(p => p.id)); $('status').textContent = ''; };
@@ -1419,7 +1459,7 @@ function renderList(){
 }
 function updateSide(){
   const p = cur(); if (!p) return; const t = totals(p);
-  $('plateName').textContent = `${p.group ? p.group.replace(/\//g, ' › ') + ' › ' : ($('round').value || '') + ' '}${p.name}` + (p.data.grid && p.data.gridAuto !== undefined && p.data.gridAuto < GRID_OK ? ' · ⚠ 격자 자동 맞춤 신뢰도 낮음 — 인쇄 격자와 겹치는지 확인' : '');
+  $('plateName').textContent = `${p.group ? p.group.replace(/\//g, ' › ') + ' › ' : (roundOf(p) ? roundOf(p) + ' ' : '')}${p.name}` + (p.data.grid && p.data.gridAuto !== undefined && p.data.gridAuto < GRID_OK ? ' · ⚠ 격자 자동 맞춤 신뢰도 낮음 — 인쇄 격자와 겹치는지 확인' : '');
   $('total').textContent = t.sum;
   $('progress').textContent = p.data.marks ? `직접 ${p.data.marks.filter(k => k.manual && !k.imp).length}${p.data.marks.some(k => k.imp) ? ` · 다른 프로그램 ${p.data.marks.filter(k => k.imp).length}` : ''} · 자동 ${p.data.marks.filter(k => !k.manual).length}${matchInfo(p).M ? ` · 겹침 ${matchInfo(p).M} (1개로 셈)` : ''}${Object.keys(p.data.cells).length ? ` · 직접 입력 칸 ${Object.keys(p.data.cells).length}개` : ''}${p.data.grid && p.data.checked && Object.keys(p.data.checked).length ? ` · 센 칸 ${cellsOf(p).filter(c => p.data.checked[c.key]).length}/${cellsOf(p).length}` : ''}${p.data.grid ? '' : p.data.noGrid ? ' · 격자·원 없음(합계 = 점 개수)' : ' · 격자 미지정(합계는 점 개수)'}`
                                            : `입력 ${t.n} / ${t.N} 칸${t.n < t.N ? ` (미입력 ${t.N - t.n})` : ''}`;
@@ -1526,7 +1566,7 @@ async function annotatedBlob(p){
   const t = totals(p), mk = p.data.marks || [], fs = W/40, bandH = fs*2.4, top = H - bandH - fs*1.6;
   g.fillStyle = 'rgba(0,0,0,.66)'; g.fillRect(0, top, W, bandH);
   g.textAlign = 'left'; g.textBaseline = 'top'; g.fillStyle = '#ff8a1f'; g.font = `bold ${fs}px "NanumSquareRound","Malgun Gothic", sans-serif`;
-  g.fillText(`${p.group ? p.group.replace(/\//g, ' › ') : ($('round').value || '')}  ${p.name.replace(/\.[^.]+$/,'')}   콜로니 ${t.sum} CFU`, fs*.5, top + fs*.2);
+  g.fillText(`${p.group ? p.group.replace(/\//g, ' › ') : roundOf(p)}  ${p.name.replace(/\.[^.]+$/,'')}   콜로니 ${t.sum} CFU`, fs*.5, top + fs*.2);
   g.fillStyle = '#fff'; g.font = `${fs*.6}px "NanumSquareRound","Malgun Gothic", sans-serif`;
   // 둘째 줄: 사람이 클릭해 표시한 수. 「자동 계수」 버튼을 쓴 판만 자동 표시 수를 따로 적음
   const nClick = mk.filter(k => k.manual).length, nAuto = mk.length - nClick;
@@ -1537,7 +1577,7 @@ function updateCheckUI(){ const n = S.plates.filter(p => S.checked.has(p.id)).le
   const d = document.getElementById('btnDelChecked'); if (d){ d.textContent = `체크한 사진 빼기 (${n}장)`; d.disabled = !n; }
   const ca = document.getElementById('ckAll'); if (ca){ ca.checked = n > 0 && n === S.plates.length; ca.indeterminate = n > 0 && n < S.plates.length; } }
 function downloadBlob(b, name){ const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }
-const outName = p => `${p.group ? p.group.replace(/\//g, '_') + '_' : (($('round').value || '').trim() ? $('round').value.trim() + '_' : '')}${p.name.replace(/\.[^.]+$/,'')}_격자 콜로니 계수.jpg`;
+const outName = p => `${p.group ? p.group.replace(/\//g, '_') + '_' : (roundOf(p).trim() ? roundOf(p).trim() + '_' : '')}${p.name.replace(/\.[^.]+$/,'')}_격자 콜로니 계수.jpg`;
 $('btnPng').onclick = async () => { const p = cur(); if (!p) return; downloadBlob(await annotatedBlob(p), outName(p)); };
 // 체크한 사진만 차례로 저장 (브라우저가 "여러 파일 다운로드 허용"을 한 번 물어볼 수 있음)
 $('btnSaveChecked').onclick = async () => {
@@ -1649,6 +1689,11 @@ $('btnFull').onclick = async () => {
   else { setFocusMode(false); try { if (document.fullscreenElement) await document.exitFullscreen(); } catch(e){} }
 };
 document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && document.body.classList.contains('focus')) setFocusMode(false); });
+
+$('trashClose').onclick = () => $('trashDlg').close();
+$('trashRestore').onclick = async () => { const ids = trashSel(); if (!ids.length) return alert('복원할 사진을 체크하세요.'); const n = await restoreTrash(ids); $('trashDlg').close(); $('status').textContent = `빼낸 사진 ${n}장 복원`; };
+$('trashPurge').onclick = async () => { const ids = trashSel(); if (!ids.length) return alert('지울 사진을 체크하세요.');
+  if (!confirm(`체크한 ${ids.length}장을 보관함에서 완전히 지울까요? 다시 복원할 수 없습니다 (찍은 점 기록은 남아, 같은 사진을 다시 열면 이어집니다).`)) return; await purgeTrash(ids); openTrash(); };
 
 resize(); setModeButtons(); updateHint();
 restoreSession().then(() => loadTrain()).then(cleanTrain);   // 새로고침 전에 열어 둔 사진 목록·보던 사진·회차 복원
