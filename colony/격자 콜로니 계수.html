@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610111741';   /*APPVER*/
+  var MY = '202610111751';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -16,7 +16,7 @@
 })();
 </script>
 <title>격자 콜로니 계수</title>
-<meta name="version" content="202610111741">
+<meta name="version" content="202610111751">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -873,7 +873,7 @@ $('btnZoomIn').onclick = () => zoomBy(1.4); $('btnZoomOut').onclick = () => zoom
 
 // ---------- 자동 계수 (NC0 기준) ----------
 // 설정값은 C# 계수기(scripts/ColonyCounter.cs)와 같음
-const AC = { sens:8, minArea:8, edge:0.96, bgR:120, mergeGap:4, printDark:70, printMin:250, inkPad:14, blueInk:28,
+const AC = { sens:8, minArea:8, edge:0.93, bgR:120, mergeGap:4, printDark:70, printMin:250, inkPad:14, blueInk:28,
              splitMin:2000, peakBlur:8, peakR:30, peakRatio:0.35, reflectArea:600, rMinF:0.17, rMaxF:0.26, darkOpen:5, satOpen:3 };
 function boxBlur(a, w, h, r){
   const t = new Float32Array(w*h), o = new Float32Array(w*h);
@@ -1268,10 +1268,14 @@ const NO_NC = { minPeak: 18, minArea: 60 };
 // 확실한 점만 셈 (2026-10-11 사용자 요청: 흐릿한 건 세지 않음): 진하기 22 이상·크기 60px 이상 — N.C·학습 모델과 상관없이 공통
 const CONFIDENT = { minPeak: 22, minArea: 60 };
 const isFaint = b => b.peak < CONFIDENT.minPeak || b.area < CONFIDENT.minArea;
+// 물방울 흰 점(빛이 반사돼 하얗게 반짝이는 작은 점)은 콜로니로 셈 (2026-10-11 사용자 요청): 밝음이 주된 특징 + 색 거의 없음 + 아주 밝음(30 이상) + 작음(넓이 12~400px)
+// 넓은 빛 반사 자국(400px 초과)과 격자선 점처럼 흐린 것(밝기 30 미만)은 제외
+const isDroplet = b => brightDom(b) && b.sat < 15 && b.bright >= 30 && b.area >= 12 && b.area <= 400;
 // 다른 프로그램이 그린 표시(빨강·초록 등 아주 진한 색 점)는 콜로니가 아님 → 「표시 점 자동 세기」로 셀 것
 const MARKER_SAT = 150;
 function classify(b, nc, P){
   if (b.sat >= MARKER_SAT) return 'marker';
+  if (isDroplet(b)) return 'colony';   // 물방울 흰 점: 작아도·N.C와 상관없이 셈
   if (P && P.v >= 3 && P.model){   // 학습 모델: 후보 점의 특징으로 「콜로니일 확률」을 계산해 기준 이상만 셈
     const ncl = nc && nc.some(q => q.peak >= b.peak && q.area >= b.area) ? 1 : 0;
     return lrProb(P.model, featOf(b, ncl, P.model.basic)) >= P.model.thr ? (isFaint(b) ? 'faint' : 'colony') : (ncl ? 'nclike' : isReflect(b) ? 'reflect' : 'filtered'); }
@@ -1285,7 +1289,9 @@ function classify(b, nc, P){
 }
 S.autoParams = (() => { try { return JSON.parse(localStorage.getItem(LS_KEY + 'autoParams')) || null; } catch(e){ return null; } })();
 // 자동 계수에 실제로 쓰는 기준: 새 방식(v3) 학습 모델이 「새 판 예측」에서 기본보다 나을 때만. 예전 방식(찾은 비율만 본) 기준은 헛점이 많아 쓰지 않음
-const activeParams = () => { const P = S.autoParams; return P && P.v >= 3 && P.model && P.active ? P : null; };
+// 학습 모델은 새 판 예측(검증) 점수(F1 = 찾은 것과 헛점을 함께 따진 점수)가 0.5 이상이고 기본보다 나을 때만 씀 — 자료가 엉성하면 기본 기준이 더 안전
+const MODEL_MIN_F1 = 0.5;
+const activeParams = () => { const P = S.autoParams; return P && P.v >= 3 && P.model && P.active && (P.cvF1 || 0) >= MODEL_MIN_F1 ? P : null; };
 S.train = { samples: {}, log: [] };
 async function loadTrain(){ const v = await idbGet('meta', 'trainSet'); if (v && v.samples) S.train = v; showCal(); }
 // 학습 자료 정리: 다른 프로그램 표시가 그려진 판에서 만든 자료는 빼고 다시 학습 (그런 자료로 맞춘 모델이 빈 곳에 점을 찍음)
@@ -1392,7 +1398,7 @@ async function relearn(reason){
   const r = fitParams(); if (!r) return null;
   const prev = S.autoParams;
   // 새 판 예측(검증)이 학습 전 기본보다 좋을 때만 자동 계수에 씀 (F1: 찾은 것과 헛점을 함께 따진 점수)
-  const cvF1 = r.cv ? 2 * r.cv.M / (r.cv.Nm + r.cv.Na || 1) : 0, active = !!r.cv && cvF1 >= r.base.f1 - 0.005;
+  const cvF1 = r.cv ? 2 * r.cv.M / (r.cv.Nm + r.cv.Na || 1) : 0, active = !!r.cv && cvF1 >= r.base.f1 - 0.005 && cvF1 >= MODEL_MIN_F1;
   S.autoParams = { v: 3, model: r.m, active, cvF1, baseF1: r.base.f1, score: r.fit.recall, recall: r.fit.recall, fpPer: r.fit.fpPer, M: r.fit.M, Na: r.fit.Na, trainPlates: r.n, trainMan: r.fit.Nm,
     base: {recall: r.base.recall, fpPer: r.base.fpPer}, cv: r.cv && {recall: r.cv.recall, fpPer: r.cv.fpPer}, baseScore: r.base.recall, at: new Date().toISOString() };
   try { localStorage.setItem(LS_KEY + 'autoParams', JSON.stringify(S.autoParams)); } catch(e){}
@@ -1423,7 +1429,7 @@ function showCal(){
         <tr><td>학습 전 기본</td><td>${pc(P.base && P.base.recall)}</td><td>${fp(P.base && P.base.fpPer)}</td></tr>
         <tr><td>학습 후 (학습한 판)</td><td>${pc(P.recall)}</td><td>${fp(P.fpPer)}</td></tr>
         <tr class="tot"><td>새 판 예측 (검증)</td><td>${P.cv ? pc(P.cv.recall) : '–'}</td><td>${P.cv ? fp(P.cv.fpPer) : '–'}</td></tr></table>
-        <div style="margin:4px 0;color:${P.active ? 'var(--ok)' : 'var(--warn)'}">${P.active ? '✔ 새 판 예측이 기본보다 좋아, 지금 자동 계수에 이 학습 모델을 씁니다.' : '아직 기본 기준으로 셉니다 — 새 판 예측이 학습 전 기본보다 나아질 때까지 직접 계수한 판을 더 학습시키세요.'}</div>
+        <div style="margin:4px 0;color:${activeParams() ? 'var(--ok)' : 'var(--warn)'}">${activeParams() ? '✔ 새 판 예측이 기본보다 좋아, 지금 자동 계수에 이 학습 모델을 씁니다.' : '아직 기본 기준으로 셉니다 — 새 판 예측이 충분히 좋아질 때까지(놓친 것·헛점을 함께 따진 점수 0.5 이상) 직접 계수한 판을 더 학습시키세요.'}</div>
         <div class="muted">찾은 비율 = 직접 점 중 자동 계수도 찾은 비율, 헛점 = 직접 점이 없는 곳에 찍은 점(판당). 「새 판 예측」은 판 하나씩 빼고 학습해 그 판을 맞혀 본 결과로, 학습 전보다 좋아야 학습이 효과 있는 것입니다${P.cv ? '' : ' (2판 이상 학습하면 나옴)'}.</div>`
       : P ? '<div style="color:var(--warn)">예전 방식(찾은 비율만 보고 헛점은 안 따짐)으로 맞춘 기준이라 지금은 쓰지 않고 기본 기준으로 셉니다. 「완료 판 전부 학습」을 한 번 누르면 헛점까지 따지는 새 방식으로 다시 학습합니다.</div>' : '');
   const log = S.train.log.slice(-6).reverse();
