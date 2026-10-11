@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>격자 콜로니 계수</title>
-<meta name="version" content="202610111425">
+<meta name="version" content="202610111451">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -209,6 +209,9 @@ dialog#updDlg h3{font:800 16px var(--serif);color:var(--accent);margin:0 0 6px}
 
   <h2>2. 격자 맞추기</h2>
   <div class="row"><button id="btnGridAuto" class="primary">인쇄 격자 자동 맞춤</button></div>
+  <div class="row"><button id="btnNoGrid" title="이 판의 격자를 지웁니다. 합계는 찍은 점 개수로 셉니다 (칸별 숫자 없음)">이 판 격자 없애기</button><button id="btnNoGridChecked" title="왼쪽 목록에서 체크한 사진의 격자를 모두 지웁니다">체크한 사진 격자 없애기</button></div>
+  <div class="row"><label class="muted"><input type="checkbox" id="noGridNew"> 새로 여는 사진은 격자 없이</label></div>
+  <div class="muted">격자가 필요 없는 판(다른 프로그램으로 센 사진 등)은 격자를 없애면 칸 숫자 없이 점 개수로만 셉니다. 다시 필요하면 「인쇄 격자 자동 맞춤」을 누르세요.</div>
   <div class="muted">판을 처음 열 때 자동으로 맞춥니다. 어긋나면 이 버튼으로 다시 찾거나, 아래 2점 클릭·미세조정으로 고치세요.</div>
   <div class="row"><button id="btnGrid2">격자 교차점 2점 클릭</button> 칸 수 <input id="gridN" type="number" value="3" min="1" style="width:56px"></div>
   <div class="muted">인쇄 격자선의 교차점 A를 클릭 → 같은 선을 따라 「칸 수」만큼 떨어진 교차점 B를 클릭</div>
@@ -413,12 +416,13 @@ function cur(){ return S.plates[S.cur]; }
 // 판을 처음 열면 막 원은 자동 검출, 격자는 앞 판 것을 복사 (위치가 다르면 「정렬 미세조정」)
 function guessCircle(p){
   try { const c = findMembrane(p.img); p.data.circle = {cx:c.cx, cy:c.cy, r:c.r}; p.data.circleAuto = c.support; } catch(e){}
-  if (!p.data.grid) autoGrid(p);
+  if (!p.data.grid && !p.data.noGrid){ if (S.noGridNew) p.data.noGrid = true; else autoGrid(p); }
   save(p);
 }
 const GRID_OK = 0.45; // 격자 자동 맞춤 신뢰도 기준 (선 근처 비율: 맞으면 0.49~0.84, 틀리면 ≈ 0.37)
 // 인쇄 격자 자동 맞춤 (실패하면 앞 판 격자 복사)
 function autoGrid(p){
+  if (p.data.noGrid) return false;   // 「격자 없애기」 한 판은 자동으로 다시 만들지 않음
   let g = null; try { g = p.data.circle ? findGrid(p.img, p.data.circle) : null; } catch(e){}
   if (g && g.contrast < GRID_OK){   // 신뢰도 낮음 → 다른 판의 간격 비율로 범위를 좁혀 다시
     const rs = S.plates.filter(q => q !== p && q.data.grid && q.data.circle && q.data.gridAuto >= GRID_OK).map(q => q.data.grid.size / q.data.circle.r).sort((a,b) => a-b);
@@ -430,6 +434,13 @@ function autoGrid(p){
   if (prev){ p.data.grid = {...prev.data.grid}; p.data.gridAuto = 0; }
   return false;
 }
+// 격자가 필요 없는 판: 격자를 지우고 합계는 찍은 점 개수로. 「인쇄 격자 자동 맞춤」·2점 클릭을 하면 다시 생김
+function setNoGrid(p, on){
+  if (on){ p.data.grid = null; p.data.noGrid = true; delete p.data.gridAuto; }
+  else { p.data.noGrid = false; if (p.img) autoGrid(p); }
+  save(p);
+}
+S.noGridNew = (() => { try { return localStorage.getItem(LS_KEY + 'noGridNew') === '1'; } catch(e){ return false; } })();
 function circleFrom3(a,b,c){
   const d = 2*(a.x*(b.y-c.y)+b.x*(c.y-a.y)+c.x*(a.y-b.y)); if (Math.abs(d) < 1e-6) return null;
   const ux = ((a.x*a.x+a.y*a.y)*(b.y-c.y)+(b.x*b.x+b.y*b.y)*(c.y-a.y)+(c.x*c.x+c.y*c.y)*(a.y-b.y))/d;
@@ -672,7 +683,7 @@ function handleClick(sx, sy){
   if (S.mode === 'circle'){ S.pick.push(pt); if (S.pick.length === 3){ const c = circleFrom3(...S.pick); if (c){ p.data.circle = c; save(p); } S.pick = []; S.mode = 'mark'; setModeButtons(); fitView(); } draw(); return; }
   if (S.mode === 'grid'){ S.pick.push(pt); if (S.pick.length === 2){ const [A,B] = S.pick, N = Math.max(1, +$('gridN').value || 1);
       let a = Math.atan2(B.y - A.y, B.x - A.x); while (a > Math.PI/4) a -= Math.PI/2; while (a <= -Math.PI/4) a += Math.PI/2;
-      p.data.grid = {ox:A.x, oy:A.y, a, size: Math.hypot(B.x-A.x, B.y-A.y)/N}; save(p); S.pick = []; S.mode = 'mark'; setModeButtons(); updateSide(); }
+      p.data.grid = {ox:A.x, oy:A.y, a, size: Math.hypot(B.x-A.x, B.y-A.y)/N}; p.data.noGrid = false; save(p); S.pick = []; S.mode = 'mark'; setModeButtons(); updateSide(); }
     draw(); return; }
   if (S.mode === 'mark'){ const d = p.data; if (!d.marks) d.marks = [];
     // 원 중심 근처 클릭 = 삭제 (큰 원 안에서도 작은 콜로니를 추가할 수 있게)
@@ -718,7 +729,7 @@ $('btnCircle').onclick = () => { closeEntry(true); S.tool = 'dot'; S.mode = S.mo
 $('btnGrid2').onclick = () => { closeEntry(true); S.tool = 'dot'; S.mode = S.mode==='grid' ? 'mark' : 'grid'; S.pick = []; setModeButtons(); draw(); };
 $('btnAlignMode').onclick = () => { if (!cur() || !cur().data.grid) return alert('먼저 격자를 지정하세요.'); closeEntry(true); S.mode = S.mode==='align' ? 'mark' : 'align'; setModeButtons(); cv.focus(); };
 $('btnPrevAlign').onclick = () => { const p = cur(); if (!p) return; const prev = S.plates.slice(0, S.cur).reverse().find(q => q.data.grid && q.data.circle);
-  if (!prev) return alert('앞쪽에 정렬된 판이 없습니다.'); p.data.circle = {...prev.data.circle}; p.data.grid = {...prev.data.grid}; save(p); fitView(); updateSide(); draw(); };
+  if (!prev) return alert('앞쪽에 정렬된 판이 없습니다.'); p.data.circle = {...prev.data.circle}; p.data.grid = {...prev.data.grid}; p.data.noGrid = false; save(p); fitView(); updateSide(); draw(); };
 $('gAng').onchange = () => { const p = cur(); if (p && p.data.grid){ p.data.grid.a = (+$('gAng').value)*Math.PI/180; save(p); draw(); } };
 $('gSize').onchange = () => { const p = cur(); if (p && p.data.grid){ p.data.grid.size = +$('gSize').value; save(p); draw(); } };
 // 계수 완료 표시/취소 (목록 ✔ 칸, 도구 막대 버튼, C키, 오른쪽 버튼 모두 같은 동작). 완료해도 다른 사진으로 넘어가지 않음
@@ -740,9 +751,20 @@ function undoMark(){ const p = cur(); if (!p || !p.data.marks) return; const i =
 $('btnUndo').onclick = undoMark;
 window.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z') && e.target !== entry){ e.preventDefault(); undoMark(); } });
 $('btnGridAuto').onclick = () => { const p = cur(); if (!p || !p.img) return; closeEntry(false);
-  const ok = autoGrid(p); save(p); updateSide(); draw();
+  p.data.noGrid = false; const ok = autoGrid(p); save(p); updateSide(); renderList(); draw();
   if (!ok) alert('인쇄 격자를 찾지 못해 앞 판 격자를 복사했습니다. 2점 클릭으로 맞춰 주세요.'); };
 $('btnFit').onclick = () => { fitView(); draw(); };
+const typedCells = p => Object.keys(p.data.cells || {}).length;
+$('btnNoGrid').onclick = () => { const p = cur(); if (!p) return; closeEntry(false);
+  if (p.data.noGrid){ setNoGrid(p, false); updateSide(); renderList(); draw(); return; }   // 없앤 판에서 누르면 다시 맞춤
+  if (typedCells(p) && !confirm(`이 판에 칸마다 직접 입력한 숫자 ${typedCells(p)}칸이 있습니다. 격자를 없애면 그 숫자는 합계에 안 들어갑니다(찍은 점 개수로만 셈). 계속할까요?`)) return;
+  setNoGrid(p, true); updateSide(); renderList(); draw(); };
+$('btnNoGridChecked').onclick = () => { const list = S.plates.filter(p => S.checked.has(p.id)); if (!list.length) return alert('격자를 없앨 사진을 왼쪽 체크칸으로 고르세요.');
+  const typed = list.filter(typedCells).length;
+  if (!confirm(`체크한 사진 ${list.length}장의 격자를 없앨까요? 합계는 찍은 점 개수로 셉니다.${typed ? `\n(그중 ${typed}장은 칸마다 직접 입력한 숫자가 있어 그 숫자는 합계에서 빠집니다)` : ''}`)) return;
+  list.forEach(p => setNoGrid(p, true)); updateSide(); renderList(); draw(); };
+$('noGridNew').checked = S.noGridNew;
+$('noGridNew').onchange = e => { S.noGridNew = e.target.checked; try { localStorage.setItem(LS_KEY + 'noGridNew', S.noGridNew ? '1' : ''); } catch(_){} };
 S.alignGrid = (() => { try { return localStorage.getItem(LS_KEY + 'alignGrid') === '1'; } catch(e){ return false; } })(); S.rot90 = 0;
 $('btnAlignGrid').classList.toggle('on', S.alignGrid);
 $('btnAlignGrid').onclick = () => { S.alignGrid = !S.alignGrid; setRotation(); };
@@ -1337,12 +1359,13 @@ function updateSide(){
   const p = cur(); if (!p) return; const t = totals(p);
   $('plateName').textContent = `${p.group ? p.group.replace(/\//g, ' › ') + ' › ' : ($('round').value || '') + ' '}${p.name}` + (p.data.grid && p.data.gridAuto !== undefined && p.data.gridAuto < GRID_OK ? ' · ⚠ 격자 자동 맞춤 신뢰도 낮음 — 인쇄 격자와 겹치는지 확인' : '');
   $('total').textContent = t.sum;
-  $('progress').textContent = p.data.marks ? `직접 ${p.data.marks.filter(k => k.manual && !k.imp).length}${p.data.marks.some(k => k.imp) ? ` · 다른 프로그램 ${p.data.marks.filter(k => k.imp).length}` : ''} · 자동 ${p.data.marks.filter(k => !k.manual).length}${matchInfo(p).M ? ` · 겹침 ${matchInfo(p).M} (1개로 셈)` : ''}${Object.keys(p.data.cells).length ? ` · 직접 입력 칸 ${Object.keys(p.data.cells).length}개` : ''}${p.data.grid ? '' : ' · 격자 미지정(합계는 점 개수)'}`
+  $('progress').textContent = p.data.marks ? `직접 ${p.data.marks.filter(k => k.manual && !k.imp).length}${p.data.marks.some(k => k.imp) ? ` · 다른 프로그램 ${p.data.marks.filter(k => k.imp).length}` : ''} · 자동 ${p.data.marks.filter(k => !k.manual).length}${matchInfo(p).M ? ` · 겹침 ${matchInfo(p).M} (1개로 셈)` : ''}${Object.keys(p.data.cells).length ? ` · 직접 입력 칸 ${Object.keys(p.data.cells).length}개` : ''}${p.data.grid ? '' : p.data.noGrid ? ' · 격자 없음(합계 = 점 개수)' : ' · 격자 미지정(합계는 점 개수)'}`
                                            : `입력 ${t.n} / ${t.N} 칸${t.n < t.N ? ` (미입력 ${t.N - t.n})` : ''}`;
   $('autoInfo').textContent = p.data.auto ? autoText(p.data.auto) : '같은 회차 N.C 판에 있는 점 수준은 빼고(NC0 기준) 셉니다.';
   $('btnDoneTool').classList.toggle('on', !!p.data.done); $('btnDoneTool').firstChild.textContent = p.data.done ? '✔ 완료됨 ' : '✔ 계수 완료 ';
   renderCompareCur(p); if ($('cmpAll').dataset.open) renderCompareAll(); showCal();
   if (!/세는 중/.test($('impInfo').textContent)) $('impInfo').textContent = impText(p);
+  $('btnNoGrid').textContent = p.data.noGrid ? '이 판 격자 다시 맞추기' : '이 판 격자 없애기';
   $('btnAutoOne').textContent = hasAuto(p) ? '이 판 자동 계수 지우기' : '이 판 자동 계수';
   $('btnAutoOne').classList.toggle('on', hasAuto(p));
   if (p.data.grid){ $('gAng').value = (p.data.grid.a*180/Math.PI).toFixed(1); $('gSize').value = p.data.grid.size.toFixed(1); }
@@ -1400,7 +1423,7 @@ $('btnXlsx').onclick = () => {
   for (const p of plates){
     const t = totals(p), h = has(p), nc = p.label === 'N.C', mk = p.data.marks || [];
     sum.push([...head(p), p.no, p.label, p.name, h ? t.sum : null, mk.filter(k => k.manual && !k.imp).length, mk.filter(k => !k.manual).length, mk.filter(k => k.imp).length,
-              Object.keys(p.data.cells).length, p.data.done ? 'O' : '', !h ? '미계수' : (nc ? '음성대조' : '')]);
+              Object.keys(p.data.cells).length, p.data.done ? 'O' : '', !h ? '미계수' : [nc ? '음성대조' : '', p.data.noGrid ? '격자 없음' : ''].filter(Boolean).join(', ')]);
     if (p.data.grid && h){ const mc = markCounts(p);
       for (const c of cellsOf(p)){ const v = cellValue(p, c.key, mc); if (v === undefined || +v === 0) continue; cellRows.push([...head(p), p.no, p.label, c.i, c.j, +v, +c.frac.toFixed(2)]); } }
     const mi = matchInfo(p);
