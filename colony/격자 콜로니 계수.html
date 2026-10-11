@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>격자 콜로니 계수</title>
-<meta name="version" content="202610111457">
+<meta name="version" content="202610111458">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -43,7 +43,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 }
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
-body{background:var(--bg);color:var(--text);font:14.5px/1.6 var(--sans);display:grid;grid-template-columns:270px 1fr 310px;grid-template-rows:auto 1fr;height:100vh;word-break:keep-all;overflow-wrap:break-word}
+body{background:var(--bg);color:var(--text);font:14.5px/1.6 var(--sans);display:grid;grid-template-columns:var(--lw,270px) 1fr var(--rw,310px);grid-template-rows:auto 1fr;height:100vh;word-break:keep-all;overflow-wrap:break-word}
 header{grid-column:1/4;display:flex;gap:10px;align-items:center;padding:10px 16px;background:linear-gradient(#24272c,#1d2024);border-bottom:1px solid var(--rule);flex-wrap:wrap}
 header h1{font:800 20px/1 var(--serif);letter-spacing:.02em;margin:0 14px 0 0;color:var(--accent)}
 header h1 small{font:12px var(--sans);color:var(--muted);letter-spacing:0;margin-left:8px}
@@ -123,6 +123,10 @@ dialog#updDlg h3{font:800 16px var(--serif);color:var(--accent);margin:0 0 6px}
 .upd{display:flex;flex-direction:column;align-items:center;line-height:1.2}
 #verTag{font-size:10.5px;color:var(--muted);margin-top:2px;white-space:nowrap}
 #verTag.new{color:#ff8a6b;font-weight:700}
+/* 좌우 메뉴 폭 조절 손잡이 (경계선을 끌기, 두 번 클릭 = 원래 폭) */
+.split{position:fixed;width:8px;cursor:col-resize;z-index:20;background:transparent;transition:background .15s}
+.split:hover,.split.drag{background:rgba(201,164,92,.35)}
+body.resizing{cursor:col-resize;user-select:none}
 ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#3a3f46;border-radius:5px}::-webkit-scrollbar-track{background:transparent}
 </style>
 </head>
@@ -1547,6 +1551,31 @@ $('updBack').onclick = async () => { const prev = await idbGet('meta', 'prevVers
   if (!confirm(`이전 버전 ${verText(prev.ver)}으로 되돌릴까요?`)) return; await installVersion(prev.text, '되돌리기'); };
 // 하루 한 번 조용히 새 버전 확인 (주소가 정해져 있을 때만)
 (() => { try { const k = LS_KEY + 'updChecked', today = new Date().toISOString().slice(0, 10); if (updBase() && localStorage.getItem(k) !== today){ localStorage.setItem(k, today); checkOnline(true); } } catch(e){} })();
+
+// ---------- 좌우 메뉴 폭 조절: 목록·오른쪽 메뉴 경계선을 끌어서 (폭은 이 브라우저에 기억, 두 번 클릭 = 원래 폭) ----------
+(() => {
+  const DEF = {lw: 270, rw: 310}, MIN = 160, root = document.documentElement;
+  const W = {...DEF}; try { Object.assign(W, JSON.parse(localStorage.getItem(LS_KEY + 'panelW')) || {}); } catch(e){}
+  const mk = side => { const d = document.createElement('div'); d.className = 'split'; d.title = '끌어서 폭 조절 · 두 번 클릭 = 원래 폭'; document.body.appendChild(d); d.dataset.side = side; return d; };
+  const L = mk('lw'), R = mk('rw');
+  const clamp = () => { W.lw = Math.min(Math.max(W.lw, MIN), Math.max(MIN, window.innerWidth * 0.45)); W.rw = Math.min(Math.max(W.rw, MIN), Math.max(MIN, window.innerWidth * 0.45)); };
+  const apply = () => { clamp(); root.style.setProperty('--lw', W.lw + 'px'); root.style.setProperty('--rw', W.rw + 'px');
+    const top = document.querySelector('header').offsetHeight, h = window.innerHeight - top;
+    L.style.top = R.style.top = top + 'px'; L.style.height = R.style.height = h + 'px';
+    L.style.left = (W.lw - 4) + 'px'; R.style.left = (window.innerWidth - W.rw - 4) + 'px'; resize(); };
+  const save = () => { try { localStorage.setItem(LS_KEY + 'panelW', JSON.stringify(W)); } catch(e){} };
+  for (const d of [L, R]){
+    d.addEventListener('pointerdown', e => { e.preventDefault(); try { d.setPointerCapture(e.pointerId); } catch(_){} d.classList.add('drag'); document.body.classList.add('resizing'); });
+    d.addEventListener('pointermove', e => { if (!d.classList.contains('drag')) return;
+      if (d.dataset.side === 'lw') W.lw = e.clientX; else W.rw = window.innerWidth - e.clientX; apply(); });
+    const end = () => { if (!d.classList.contains('drag')) return; d.classList.remove('drag'); document.body.classList.remove('resizing'); save(); };
+    d.addEventListener('pointerup', end); d.addEventListener('pointercancel', end);
+    d.addEventListener('dblclick', () => { W[d.dataset.side] = DEF[d.dataset.side]; apply(); save(); });
+  }
+  window.addEventListener('resize', apply);
+  new ResizeObserver(apply).observe(document.querySelector('header'));   // 머리줄이 두 줄로 바뀌어도 손잡이 위치 맞춤
+  apply();
+})();
 
 resize(); setModeButtons(); updateHint();
 restoreSession();   // 새로고침 전에 열어 둔 사진 목록·보던 사진·회차 복원
