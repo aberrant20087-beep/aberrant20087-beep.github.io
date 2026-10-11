@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610111534';   /*APPVER*/
+  var MY = '202610111538';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -16,7 +16,7 @@
 })();
 </script>
 <title>격자 콜로니 계수</title>
-<meta name="version" content="202610111534">
+<meta name="version" content="202610111538">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -1012,7 +1012,10 @@ function setNcFile(f, restoring){
 }
 $('ncIn').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) setNcFile(f); };
 $('ncClear').onclick = () => { S.ncPlate = null; S.ncPts = null; idbPut('meta', 'ncPhoto', null); updateNcInfo(); };
+// 다른 프로그램 표시(보라)로 센 판: 그 표시가 곧 계수 결과 → 자동 계수·학습 대상이 아님 (사진에 그려진 표시가 콜로니 특징을 흐림)
+const hasImp = p => !!(p && (p.data.marks || []).some(k => k.imp));
 async function autoCount(p, force){
+  if (hasImp(p)){ p.data.auto = {nc0: 0, skipped: 'imp', at: new Date().toISOString(), applied: false}; return p.data.auto; }
   await ensureCircle(p); await yieldUI();
   const P = activeParams(), nc = await ncPoints(); const r = P ? findBlobsWith(p.img, p.data.circle, LEARN_SENS, LEARN_MINAREA) : findBlobs(p.img, p.data.circle);
   const col = [], ncl = []; let refl = 0, filt = 0, mk = 0;
@@ -1142,7 +1145,7 @@ $('btnAutoClearAll').onclick = () => { const n = S.plates.filter(hasAuto).length
 $('btnAutoAll').onclick = async () => {
   if (!S.plates.length) return;
   // 대상: 자동 점이 아직 없는 판. 직접 찍은 점이 있는 판은 비교용으로 개수 제한 없이 자동 계수
-  const todo = S.plates.filter(p => !hasAuto(p) && !Object.keys(p.data.cells).length);
+  const todo = S.plates.filter(p => !hasAuto(p) && !Object.keys(p.data.cells).length && !hasImp(p));   // 다른 프로그램 표시로 센 판은 뺌
   const nMan = todo.filter(p => (p.data.marks || []).some(k => k.manual)).length;
   if (!confirm(`자동 계수할 판 ${todo.length}개 (그중 직접 계수한 판 ${nMan}개는 비교용으로 모두 표시).\n계속할까요?`)) return;
   if (!ncSource() && !confirm('N.C 대조 사진이 없어 NC0 기준을 쓸 수 없습니다(모든 점을 셈). 계속할까요?')) return;
@@ -1183,6 +1186,15 @@ S.autoParams = (() => { try { return JSON.parse(localStorage.getItem(LS_KEY + 'a
 const activeParams = () => { const P = S.autoParams; return P && P.v >= 3 && P.model && P.active ? P : null; };
 S.train = { samples: {}, log: [] };
 async function loadTrain(){ const v = await idbGet('meta', 'trainSet'); if (v && v.samples) S.train = v; showCal(); }
+// 학습 자료 정리: 다른 프로그램 표시가 그려진 판에서 만든 자료는 빼고 다시 학습 (그런 자료로 맞춘 모델이 빈 곳에 점을 찍음)
+async function cleanTrain(){
+  const bad = Object.keys(S.train.samples).filter(id => { const p = S.plates.find(q => trainId(q) === id); return (p && hasImp(p)) || /빨간점|확대본/.test(id); });
+  if (!bad.length) return;
+  for (const id of bad) delete S.train.samples[id];
+  if (Object.keys(S.train.samples).length) await relearn(`다른 프로그램 표시 판 ${bad.length}개 학습 자료에서 뺌`);
+  else { S.autoParams = null; try { localStorage.removeItem(LS_KEY + 'autoParams'); } catch(e){} await saveTrain(); S.ncPts = null; showCal(); }
+  $('learnState').textContent = `다른 프로그램 표시가 그려진 판 ${bad.length}개를 학습 자료에서 뺐습니다${Object.keys(S.train.samples).length ? ' (남은 자료로 다시 학습)' : ' — 남은 자료가 없어 기본 기준으로 셉니다'}.`;
+}
 function saveTrain(){ return idbPut('meta', 'trainSet', S.train); }
 const trainId = p => p.group ? `g:${p.group}|${p.name}` : `${$('round').value || ''}|${p.name}`;
 function paramText(P){ if (!P) return '기본값 (가장 넓게 셈)'; if (P.v >= 3 && P.model) return `학습 모델 (특징 ${P.model.w.length}개 · 콜로니 확률 ${Math.round(P.model.thr * 100)}% 이상만 셈)`; const bx = P.brightExtra ?? (P.noBright ? BRIGHT_OFF : 0);
@@ -1283,6 +1295,7 @@ async function relearn(reason){
 }
 async function learnPlate(p, silent){
   if (!p || p.label === 'N.C') return;
+  if (hasImp(p)){ if (!silent) alert('이 판은 다른 프로그램 표시(보라)가 그려진 사진이라 학습에 쓰지 않습니다. 사진 위 표시가 콜로니 모양을 가려 오히려 엉뚱한 곳에 점을 찍게 됩니다.'); return; }
   if (!(p.data.marks || []).some(k => k.manual && !k.imp)){ if (!silent) alert('이 판에는 직접 찍은 점(주황)이 없습니다. 직접 계수를 끝낸 뒤 학습시키세요.'); return; }
   $('learnState').textContent = `「${p.name}」 학습 자료 만드는 중…`; await yieldUI();
   S.train.samples[trainId(p)] = await sampleFromPlate(p); p.data.learnedAt = new Date().toISOString(); save(p);
@@ -1312,7 +1325,7 @@ function showCal(){
 }
 $('btnLearn').onclick = () => learnPlate(cur());
 $('btnLearnAll').onclick = async () => {
-  const list = S.plates.filter(p => p.label !== 'N.C' && p.data.done && (p.data.marks || []).some(k => k.manual && !k.imp));
+  const list = S.plates.filter(p => p.label !== 'N.C' && p.data.done && !hasImp(p) && (p.data.marks || []).some(k => k.manual && !k.imp));
   if (!list.length) return alert('✔ 완료로 표시했고 직접 찍은 점이 있는 판이 없습니다.');
   if (!confirm(`완료한 판 ${list.length}개를 학습 자료에 넣고 기준을 다시 맞출까요?`)) return;
   for (let i = 0; i < list.length; i++){ $('learnState').textContent = `학습 자료 만드는 중 ${i+1}/${list.length} — ${list[i].name}`; await yieldUI();
@@ -1330,7 +1343,7 @@ $('paramsIn').onchange = async e => { const f = e.target.files[0]; e.target.valu
     S.autoParams = { ...o.params, imported: f.name }; localStorage.setItem(LS_KEY + 'autoParams', JSON.stringify(S.autoParams)); S.ncPts = null; loadTrain();
   } catch(err){ alert('학습 기준 파일이 아닙니다.'); } };
 
-function autoText(a){ if (!a) return ''; if (a.view != null) return `자동 계수${a.tuned ? '(맞춘 기준)' : ''}: 이 판 자동 점 ${a.nc0}개`; return `자동 계수${a.tuned ? '(맞춘 기준)' : ''}: 콜로니 ${a.nc0}개 (NC 유사 점 ${a.nclike}개·반사 ${a.reflect}개${a.filtered ? `·${a.nc || a.tuned ? '기준 미달' : '옅고 작은 잡티'} ${a.filtered}개` : ''} 제외${a.nc ? '' : ', N.C 없음 → 진하기 18·크기 60px 이상만 셈. N.C 사진을 넣으면 더 정확'})${a.marker ? ` · 다른 프로그램 표시로 보이는 점 ${a.marker}개는 뺌 → 「표시 점 자동 세기」를 쓰세요` : ''}${a.excluded > 0.15 ? ` · 펜/라벨로 막의 ${(a.excluded*100).toFixed(0)}% 제외됨 — 확인 필요` : ''}`; }
+function autoText(a){ if (!a) return ''; if (a.skipped === 'imp') return '이 판은 다른 프로그램 표시(보라)로 센 판이라 자동 계수를 하지 않습니다. 보라 점 개수가 계수 결과입니다.'; if (a.view != null) return `자동 계수${a.tuned ? '(맞춘 기준)' : ''}: 이 판 자동 점 ${a.nc0}개`; return `자동 계수${a.tuned ? '(맞춘 기준)' : ''}: 콜로니 ${a.nc0}개 (NC 유사 점 ${a.nclike}개·반사 ${a.reflect}개${a.filtered ? `·${a.nc || a.tuned ? '기준 미달' : '옅고 작은 잡티'} ${a.filtered}개` : ''} 제외${a.nc ? '' : ', N.C 없음 → 진하기 18·크기 60px 이상만 셈. N.C 사진을 넣으면 더 정확'})${a.marker ? ` · 다른 프로그램 표시로 보이는 점 ${a.marker}개는 뺌 → 「표시 점 자동 세기」를 쓰세요` : ''}${a.excluded > 0.15 ? ` · 펜/라벨로 막의 ${(a.excluded*100).toFixed(0)}% 제외됨 — 확인 필요` : ''}`; }
 
 // ---------- 목록 / 사이드 ----------
 function renderList(){
@@ -1618,7 +1631,7 @@ $('btnFull').onclick = async () => {
 document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && document.body.classList.contains('focus')) setFocusMode(false); });
 
 resize(); setModeButtons(); updateHint();
-restoreSession();   // 새로고침 전에 열어 둔 사진 목록·보던 사진·회차 복원
+restoreSession().then(() => loadTrain()).then(cleanTrain);   // 새로고침 전에 열어 둔 사진 목록·보던 사진·회차 복원
 loadTrain();
 </script>
 </body>
