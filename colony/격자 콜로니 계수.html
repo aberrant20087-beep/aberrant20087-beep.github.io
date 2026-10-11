@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610111644';   /*APPVER*/
+  var MY = '202610111646';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -16,7 +16,7 @@
 })();
 </script>
 <title>격자 콜로니 계수</title>
-<meta name="version" content="202610111644">
+<meta name="version" content="202610111646">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -85,6 +85,9 @@ input[type=checkbox]{accent-color:var(--accent)}
 .ltbl tr[data-i]:hover td{background:#272b31}
 .ltbl tr.cur td{background:#33302a;color:#fff}
 .ltbl tr.cur td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+.ltbl tr.dragging td{opacity:.4}
+.ltbl tr.dropat td{box-shadow:inset 0 2px 0 var(--accent)}
+.ltbl tr[data-i]{cursor:grab}
 .ltbl tr.grp td{background:#1b1d21;color:var(--accent);font-weight:700;cursor:pointer;padding-top:5px;padding-bottom:5px;border-bottom:1px solid var(--rule)}
 .ltbl tr.grp td .tw{display:inline-block;width:12px;color:var(--muted)}
 .ltbl tr.grp td small{color:var(--muted);font-weight:400;margin-left:6px}
@@ -336,7 +339,7 @@ async function idbPut(store, key, val){ try { const db = await idbOpen(); await 
 async function idbGet(store, key){ try { const db = await idbOpen(); return await new Promise((res, rej) => { const rq = db.transaction(store).objectStore(store).get(key); rq.onsuccess = () => res(rq.result); rq.onerror = () => rej(rq.error); }); } catch(e){ return undefined; } }
 async function idbClear(){ try { const db = await idbOpen(); await new Promise(res => { const tx = db.transaction(['photos','meta'], 'readwrite'); tx.objectStore('photos').clear(); tx.objectStore('meta').clear(); tx.oncomplete = res; }); } catch(e){} }
 async function idbDel(store, key){ try { const db = await idbOpen(); await new Promise(res => { const tx = db.transaction(store, 'readwrite'); tx.objectStore(store).delete(key); tx.oncomplete = res; tx.onerror = res; }); } catch(e){} }
-function saveSession(){ idbPut('meta', 'session', { round: $('round').value, items: S.plates.map(p => ({name: p.name, group: p.group || ''})), cur: cur() ? cur().id : null, collapsed: [...S.collapsed] }); }
+function saveSession(){ idbPut('meta', 'session', { round: $('round').value, items: S.plates.map(p => ({name: p.name, group: p.group || '', ord: p.ord})), cur: cur() ? cur().id : null, collapsed: [...S.collapsed] }); }
 // 목록에서 사진 빼기: 사진은 「빼낸 사진」 보관함으로 옮김(「빼낸 사진 복원」으로 되살림). 찍은 점 기록(localStorage)은 그대로
 async function getTrash(){ return (await idbGet('meta', 'trash')) || []; }
 async function removePlates(ids){
@@ -379,7 +382,7 @@ async function restoreSession(){
   if (!items.length) return;
   if (m.collapsed) S.collapsed = new Set(m.collapsed);
   const list = [];
-  for (const it of items){ const b = await idbGet('photos', plateId(it.group, it.name)); if (b) list.push({file: new File([b], it.name, {type: b.type || 'image/jpeg'}), group: it.group}); }
+  for (const it of items){ const b = await idbGet('photos', plateId(it.group, it.name)); if (b) list.push({file: new File([b], it.name, {type: b.type || 'image/jpeg'}), group: it.group, ord: it.ord}); }
   if (!list.length) return;
   if (m.round) $('round').value = m.round;
   addFiles(list, true);
@@ -397,12 +400,12 @@ function addFiles(list, restoring){
   if (!items.length){ if (!restoring) alert('JPG/PNG 사진이 없습니다.'); return; }
   const m = items.map(x => x.group).join(' ').match(/(\d+회차)/); if (m && !$('round').value) $('round').value = m[1];
   const added = new Set();
-  for (const {file: f, group} of items){
+  for (const {file: f, group, ord} of items){
     const name = cleanName(f.name), id = plateId(group, name); added.add(id);
     const old = S.plates.find(p => p.id === id);
     if (!restoring) idbPut('photos', id, f);     // 새로고침해도 다시 열 수 있게 사진 보관
     if (old){ old.file = f; old.img = null; old.lod = null; continue; }
-    const p = { file:f, name, group, id, rk: group ? undefined : ($('round').value || ''), ...parseName(f.name), img:null, data:null }; p.data = load(p); S.plates.push(p);
+    const p = { file:f, name, group, id, ord, rk: group ? undefined : ($('round').value || ''), ...parseName(f.name), img:null, data:null }; p.data = load(p); S.plates.push(p);
   }
   sortPlates();
   S.ncPts = null; $('drop').style.display = 'none';
@@ -413,13 +416,23 @@ function addFiles(list, restoring){
   if (!restoring){ const nG = new Set(items.map(x => x.group).filter(Boolean)).size; $('status').textContent = `사진 ${items.length}장 추가${nG ? ` (폴더 ${nG}개)` : ''} · 판 ${S.plates.length}개`; }
 }
 const natCmp = (a, b) => a.localeCompare(b, 'ko', {numeric: true});
-function sortPlates(){ S.plates.sort((a,b) => natCmp(a.group || '', b.group || '') || a.sort - b.sort || natCmp(a.name, b.name)); }
+function sortPlates(){ const o = p => p.ord === undefined || p.ord === null ? Infinity : p.ord;
+  S.plates.sort((a,b) => natCmp(a.group || '', b.group || '') || ((o(a) - o(b)) || 0) || a.sort - b.sort || natCmp(a.name, b.name)); }
+// 목록에서 사진을 끌어 다른 사진 위에 놓으면 그 자리로 옮김 (다른 폴더 사진 위에 놓으면 그 폴더로 옮겨짐)
+async function moveRow(from, to){
+  const a = S.plates[from], b = S.plates[to]; if (!a || !b || a === b) return;
+  const curP = cur();
+  if ((a.group || '') !== (b.group || '')){ await moveToGroup([a.id], b.group || ''); if ((a.group || '') !== (b.group || '')) return; }   // 같은 이름이 있어 못 옮기면 그만
+  const list = S.plates.filter(p => p !== a), at = list.indexOf(b) + (from < to ? 1 : 0);
+  list.splice(at, 0, a); list.forEach((p, i) => p.ord = i); S.plates = list;
+  sortPlates(); S.cur = Math.max(0, S.plates.indexOf(curP)); renderList(); saveSession();
+}
 const groupChain = g => { const s = (g || '').split('/').filter(Boolean); return s.map((_, i) => s.slice(0, i + 1).join('/')); };   // 「a/b」 → [a, a/b]
 $('fileIn').onchange = e => { addFiles(e.target.files); e.target.value = ''; };   // 같은 사진을 다시 골라도 다시 읽히게
 $('dirIn').onchange = e => { addFiles(e.target.files); e.target.value = ''; };    // 폴더 열기: 하위 폴더까지, 폴더 구조 그대로
 // 끌어다 놓기: 사진 여러 장 또는 폴더(하위 폴더 포함). 화면 어디에 놓아도 됨 (목록 위에 놓아도 사진이 브라우저로 열리지 않게)
 window.addEventListener('dragover', e => e.preventDefault());
-window.addEventListener('drop', async e => { e.preventDefault();
+window.addEventListener('drop', async e => { e.preventDefault(); if (S.dragRow != null){ S.dragRow = null; return; }   // 목록 줄 옮기기는 무시
   const items = [...(e.dataTransfer.items || [])].map(it => it.webkitGetAsEntry && it.webkitGetAsEntry()).filter(Boolean);
   if (!items.some(en => en.isDirectory)){ addFiles(e.dataTransfer.files); return; }
   const out = [];
@@ -1443,14 +1456,18 @@ function renderList(){
     const t = totals(p), isNC = p.label === 'N.C';
     if (has(p)) counted++;
     if (chain.some(g => S.collapsed.has(g))) return;
-    html += `<tr data-i="${i}" class="${i === S.cur ? 'cur' : ''}${p.data.done ? ' done' : ''}"><td class="ck"><input type="checkbox" data-ck="${i}" ${S.checked.has(p.id) ? 'checked' : ''}></td><td style="padding-left:${10 + chain.length*14}px">${esc(p.name.replace(/\.[^.]+$/,''))}</td>`
+    html += `<tr data-i="${i}" draggable="true" class="${i === S.cur ? 'cur' : ''}${p.data.done ? ' done' : ''}"><td class="ck"><input type="checkbox" data-ck="${i}" ${S.checked.has(p.id) ? 'checked' : ''}></td><td style="padding-left:${10 + chain.length*14}px">${esc(p.name.replace(/\.[^.]+$/,''))}</td>`
          +  `<td class="n">${has(p) ? t.sum : '–'}${isNC ? ' <span class="muted">대조</span>' : ''}</td><td class="dn"><button class="donebtn${p.data.done ? ' on' : ''}" data-done="${i}" title="${p.data.done ? '완료 취소' : '계수 완료 표시'}">${p.data.done ? '✔' : ''}</button></td></tr>`;
   });
   html += `</tbody></table><div class="lsum"><div class="muted">계수한 판 ${counted} / ${S.plates.length} · 완료 ${S.plates.filter(p => p.data.done).length}</div></div>`;
   $('list').innerHTML = S.plates.length ? html : '<div class="lsum"><div class="muted">열린 사진이 없습니다.</div></div>';
   { const tb = document.createElement('button'); tb.textContent = '빼낸 사진 복원'; tb.title = '목록에서 뺀 사진을 다시 목록에 넣습니다'; tb.style.cssText = 'font-size:11px;padding:2px 8px;margin-top:6px';
     tb.onclick = openTrash; const ls = $('list').querySelector('.lsum'); if (ls) ls.appendChild(tb); }
-  $('list').querySelectorAll('tr[data-i]').forEach(tr => tr.onclick = e => { if (e.target.matches('input[type=checkbox], button')) return; openPlate(+tr.dataset.i); });
+  $('list').querySelectorAll('tr[data-i]').forEach(tr => { tr.onclick = e => { if (e.target.matches('input[type=checkbox], button')) return; openPlate(+tr.dataset.i); };
+    tr.ondragstart = e => { S.dragRow = +tr.dataset.i; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', 'row'); tr.classList.add('dragging'); };
+    tr.ondragend = () => { S.dragRow = null; tr.classList.remove('dragging'); $('list').querySelectorAll('.dropat').forEach(x => x.classList.remove('dropat')); };
+    tr.ondragover = e => { if (S.dragRow == null) return; e.preventDefault(); $('list').querySelectorAll('.dropat').forEach(x => x.classList.remove('dropat')); tr.classList.add('dropat'); };
+    tr.ondrop = e => { if (S.dragRow == null) return; e.preventDefault(); e.stopPropagation(); const from = S.dragRow; S.dragRow = null; moveRow(from, +tr.dataset.i); }; });
   $('list').querySelectorAll('tr.grp').forEach(tr => tr.onclick = e => { if (e.target.matches('input[type=checkbox]')) return; const g = tr.dataset.g; S.collapsed.has(g) ? S.collapsed.delete(g) : S.collapsed.add(g); saveSession(); renderList(); });
   $('list').querySelectorAll('input[data-gck]').forEach(ck => ck.onchange = () => { const g = ck.dataset.gck; S.plates.filter(q => inG(q, g)).forEach(q => ck.checked ? S.checked.add(q.id) : S.checked.delete(q.id)); renderList(); });
   $('list').querySelectorAll('button[data-done]').forEach(b => b.onclick = e => { e.stopPropagation(); toggleDone(S.plates[+b.dataset.done]); });
