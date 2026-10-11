@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610111538';   /*APPVER*/
+  var MY = '202610111542';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -16,7 +16,7 @@
 })();
 </script>
 <title>격자 콜로니 계수</title>
-<meta name="version" content="202610111538">
+<meta name="version" content="202610111542">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -537,7 +537,16 @@ function drawOverlay(c2, p, scale, opts){
     for (const k of mi.au) if (!mi.mAu.has(k)) ring(k.x, k.y, dotR, w, COLOR_AUTO);
     c2.restore(); }
 }
-// 격자선(연하게, 칸 채우기 없음) + 칸 오른쪽 위 개수
+// 칸 숫자 자리: 화면(회전 반영) 기준 오른쪽 위 모서리 안쪽. 그리기와 숫자 클릭 판정에 같이 씀
+function numPos(g, c, rot){
+  const corners = [fromGrid(g,c.i,c.j), fromGrid(g,c.i+1,c.j), fromGrid(g,c.i+1,c.j+1), fromGrid(g,c.i,c.j+1)];
+  const rc = Math.cos(rot || 0), rs = Math.sin(rot || 0), vx = q => q.x*rc - q.y*rs, vy = q => q.x*rs + q.y*rc;
+  const tr = corners.reduce((a, b) => (vx(b) - vy(b) > vx(a) - vy(a) ? b : a)), ctr = fromGrid(g, c.i+.5, c.j+.5);
+  const k = Math.min(0.3, S.numK*0.9); return {x: tr.x + (ctr.x - tr.x)*k, y: tr.y + (ctr.y - tr.y)*k};
+}
+// 센 칸 표시(빗금): 칸 숫자 클릭 또는 Shift+클릭으로 켜고 끔 → 어느 칸까지 셌는지 확인용
+function toggleChecked(p, key){ const d = p.data; if (!d.checked) d.checked = {}; if (d.checked[key]) delete d.checked[key]; else d.checked[key] = 1; }
+// 격자선(연하게, 칸 채우기 없음) + 센 칸 빗금 + 칸 오른쪽 위 개수
 function drawGridAndNumbers(c2, p, scale, opts){
   const d = p.data;
   if (!d.grid || !d.circle) return;
@@ -548,17 +557,23 @@ function drawGridAndNumbers(c2, p, scale, opts){
     const q = [fromGrid(g,c.i,c.j), fromGrid(g,c.i+1,c.j), fromGrid(g,c.i+1,c.j+1), fromGrid(g,c.i,c.j+1)];
     c2.beginPath(); c2.moveTo(q[0].x,q[0].y); for (let k=1;k<4;k++) c2.lineTo(q[k].x,q[k].y); c2.closePath(); c2.stroke();
   }
+  // 센 칸: 연한 노랑 빗금
+  if (d.checked){ const step = g.size / 6, lw = opts.export ? Math.max(2, g.size/60) : 1.4/scale;
+    for (const c of cells){ if (!d.checked[c.key]) continue;
+      const q = [fromGrid(g,c.i,c.j), fromGrid(g,c.i+1,c.j), fromGrid(g,c.i+1,c.j+1), fromGrid(g,c.i,c.j+1)];
+      c2.save(); c2.beginPath(); c2.moveTo(q[0].x,q[0].y); for (let k=1;k<4;k++) c2.lineTo(q[k].x,q[k].y); c2.closePath(); c2.clip();
+      c2.fillStyle = 'rgba(255,225,77,.10)'; c2.fill();
+      c2.strokeStyle = 'rgba(255,225,77,.55)'; c2.lineWidth = lw; c2.beginPath();
+      for (let t = -6; t <= 12; t++){ const a = fromGrid(g, c.i + t/6 - 1, c.j), b = fromGrid(g, c.i + t/6, c.j + 1); c2.moveTo(a.x, a.y); c2.lineTo(b.x, b.y); }
+      c2.stroke(); c2.restore(); } }
   // 칸별 개수: 각 칸의 화면상 오른쪽 위 모서리 안쪽에 작게
   const fs = g.size * S.numK;   // 칸 숫자 크기: 칸 한 변 대비 비율 (사용자 조절)
   c2.font = `bold ${fs}px system-ui, sans-serif`; c2.textAlign='center'; c2.textBaseline='middle';
   for (const c of cells){
     const v = cellValue(p, c.key, mc); if (v === undefined || v === '') continue;
     if (opts.skipZero && +v === 0) continue;
-    const corners = [fromGrid(g,c.i,c.j), fromGrid(g,c.i+1,c.j), fromGrid(g,c.i+1,c.j+1), fromGrid(g,c.i,c.j+1)];
     // 화면이 돌아가 있으면 돌린 뒤 기준으로 오른쪽 위 모서리를 고르고, 글자는 똑바로 세움
-    const rot = opts.rot || 0, rc = Math.cos(rot), rs = Math.sin(rot), vx = q => q.x*rc - q.y*rs, vy = q => q.x*rs + q.y*rc;
-    const tr = corners.reduce((a, b) => (vx(b) - vy(b) > vx(a) - vy(a) ? b : a)), ctr = fromGrid(g, c.i+.5, c.j+.5);
-    const k = Math.min(0.3, S.numK*0.9), m = {x: tr.x + (ctr.x - tr.x)*k, y: tr.y + (ctr.y - tr.y)*k};   // 모서리에 바짝
+    const rot = opts.rot || 0, m = numPos(g, c, rot);
     c2.save(); c2.translate(m.x, m.y); if (rot) c2.rotate(-rot);
     c2.lineWidth = Math.max(1.2/scale, fs*0.12); c2.strokeStyle = 'rgba(0,0,0,.85)'; c2.strokeText(String(v), 0, 0);
     c2.fillStyle = (+v > 0) ? '#ffe14d' : 'rgba(255,255,255,.85)'; c2.fillText(String(v), 0, 0); c2.restore();
@@ -606,7 +621,7 @@ function updateHint(){
     pickColor: '다른 프로그램이 그린 표시(점·동그라미) 하나를 정확히 클릭하세요 — 그 색으로 셉니다 · Esc = 취소',
     grid: S.pick.length === 0 ? '격자 교차점 A 클릭 — 0/2 찍힘' : `A 찍힘(빨간 점) — 같은 선을 따라 ${$('gridN').value}칸 떨어진 교차점 B 클릭 — 1/2 찍힘`,
     align: '정렬 미세조정: 방향키 이동 · Q/E 회전 · +/- 간격 · Shift=크게 · Enter/Esc 끝',
-    mark: `콜로니 클릭 = 점 찍기 · 주황 점 다시 클릭 = 삭제 · 하늘 점 더블클릭 = 삭제 · Ctrl+Z = 마지막 점 취소 — 이 판 ${totals(p).sum}개`,
+    mark: `콜로니 클릭 = 점 찍기 · 주황 점 다시 클릭 = 삭제 · 하늘 점 더블클릭 = 삭제 · 칸 숫자 클릭(또는 Shift+클릭) = 센 칸 빗금 · Ctrl+Z = 마지막 점 취소 — 이 판 ${totals(p).sum}개`,
     count: !p.data.circle ? '먼저 「막 가장자리 3점 클릭」' : !p.data.grid ? '다음 「격자 교차점 2점 클릭」' : '숫자 직접 입력: 칸 클릭 후 숫자 · T/Esc = 점 찍기로 돌아가기'
   }[S.mode];
   // 항목별로 끊어 줄바꿈이 항목 사이에서만 일어나게
@@ -668,7 +683,7 @@ cv.addEventListener('pointerdown', e => {
   const r = cv.getBoundingClientRect(), sx = e.clientX - r.left, sy = e.clientY - r.top;
   try { cv.setPointerCapture(e.pointerId); } catch(_){}
   const panOnly = e.button === 2 || e.button === 1 || S.space;
-  S.drag = {id: e.pointerId, sx, sy, tx: S.view.tx, ty: S.view.ty, moved: false, panOnly};
+  S.drag = {id: e.pointerId, sx, sy, tx: S.view.tx, ty: S.view.ty, moved: false, panOnly, shift: e.shiftKey};
   e.preventDefault();
 });
 cv.addEventListener('pointermove', e => {
@@ -682,7 +697,7 @@ function endPointer(e){
   const g = S.drag; if (!g || g.id !== e.pointerId) return; S.drag = null;
   try { cv.releasePointerCapture(e.pointerId); } catch(_){}
   cv.style.cursor = '';   // CSS의 진한 십자 포인터로 복귀
-  if (!g.moved && !g.panOnly && e.type === 'pointerup') handleClick(g.sx, g.sy);
+  if (!g.moved && !g.panOnly && e.type === 'pointerup') handleClick(g.sx, g.sy, g.shift);
 }
 cv.addEventListener('pointerup', endPointer);
 cv.addEventListener('pointercancel', endPointer);
@@ -696,7 +711,7 @@ cv.addEventListener('dblclick', e => {
   p.data.marks.splice(hit, 1); draw(); afterEdit(p);
 });
 
-function handleClick(sx, sy){
+function handleClick(sx, sy, shift){
   const p = cur(); if (!p || !p.img) return; const pt = scr2img(sx, sy);
   if (!isFinite(pt.x) || !isFinite(pt.y)) return;   // 화면 크기가 0(창이 가려짐 등)일 때 잘못된 점이 찍히지 않게
   if (S.mode === 'pickColor'){ S.mode = 'mark'; setModeButtons(); impFromPick(p, pt); return; }
@@ -706,6 +721,11 @@ function handleClick(sx, sy){
       p.data.grid = {ox:A.x, oy:A.y, a, size: Math.hypot(B.x-A.x, B.y-A.y)/N}; p.data.noGrid = false; save(p); S.pick = []; S.mode = 'mark'; setModeButtons(); updateSide(); }
     draw(); return; }
   if (S.mode === 'mark'){ const d = p.data; if (!d.marks) d.marks = [];
+    // 칸 숫자 클릭 또는 Shift+클릭 = 그 칸 「센 칸」 빗금 켜기/끄기 (점은 안 찍음)
+    if (d.grid){ const c = cellAt(p, pt.x, pt.y);
+      if (c){ const v = cellValue(p, c.key), hasNum = v !== undefined && v !== '' && !(d.marks.length && +v === 0);
+        const m = numPos(d.grid, c, S.view.rot || 0), fs = d.grid.size * S.numK;
+        if (shift || (hasNum && Math.hypot(pt.x - m.x, pt.y - m.y) <= Math.max(fs * 0.75, 10 / S.view.s))){ toggleChecked(p, c.key); draw(); afterEdit(p); return; } } }
     // 원 중심 근처 클릭 = 삭제 (큰 원 안에서도 작은 콜로니를 추가할 수 있게)
     // 한 번 클릭은 직접 점(주황)만 지움. 자동 점(하늘)은 더블클릭이나 「자동 계수 지우기」로만 지워짐 → 자동 점 옆을 눌러도 직접 점이 찍힘
     let hit = -1, hd = 1e9;
@@ -1401,7 +1421,7 @@ function updateSide(){
   const p = cur(); if (!p) return; const t = totals(p);
   $('plateName').textContent = `${p.group ? p.group.replace(/\//g, ' › ') + ' › ' : ($('round').value || '') + ' '}${p.name}` + (p.data.grid && p.data.gridAuto !== undefined && p.data.gridAuto < GRID_OK ? ' · ⚠ 격자 자동 맞춤 신뢰도 낮음 — 인쇄 격자와 겹치는지 확인' : '');
   $('total').textContent = t.sum;
-  $('progress').textContent = p.data.marks ? `직접 ${p.data.marks.filter(k => k.manual && !k.imp).length}${p.data.marks.some(k => k.imp) ? ` · 다른 프로그램 ${p.data.marks.filter(k => k.imp).length}` : ''} · 자동 ${p.data.marks.filter(k => !k.manual).length}${matchInfo(p).M ? ` · 겹침 ${matchInfo(p).M} (1개로 셈)` : ''}${Object.keys(p.data.cells).length ? ` · 직접 입력 칸 ${Object.keys(p.data.cells).length}개` : ''}${p.data.grid ? '' : p.data.noGrid ? ' · 격자·원 없음(합계 = 점 개수)' : ' · 격자 미지정(합계는 점 개수)'}`
+  $('progress').textContent = p.data.marks ? `직접 ${p.data.marks.filter(k => k.manual && !k.imp).length}${p.data.marks.some(k => k.imp) ? ` · 다른 프로그램 ${p.data.marks.filter(k => k.imp).length}` : ''} · 자동 ${p.data.marks.filter(k => !k.manual).length}${matchInfo(p).M ? ` · 겹침 ${matchInfo(p).M} (1개로 셈)` : ''}${Object.keys(p.data.cells).length ? ` · 직접 입력 칸 ${Object.keys(p.data.cells).length}개` : ''}${p.data.grid && p.data.checked && Object.keys(p.data.checked).length ? ` · 센 칸 ${cellsOf(p).filter(c => p.data.checked[c.key]).length}/${cellsOf(p).length}` : ''}${p.data.grid ? '' : p.data.noGrid ? ' · 격자·원 없음(합계 = 점 개수)' : ' · 격자 미지정(합계는 점 개수)'}`
                                            : `입력 ${t.n} / ${t.N} 칸${t.n < t.N ? ` (미입력 ${t.N - t.n})` : ''}`;
   $('autoInfo').textContent = p.data.auto ? autoText(p.data.auto) : '같은 회차 N.C 판에 있는 점 수준은 빼고(NC0 기준) 셉니다.';
   $('btnDoneTool').classList.toggle('on', !!p.data.done); $('btnDoneTool').firstChild.textContent = p.data.done ? '✔ 완료됨 ' : '✔ 계수 완료 ';
