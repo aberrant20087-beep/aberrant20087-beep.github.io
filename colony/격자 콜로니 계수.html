@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610121503';   /*APPVER*/
+  var MY = '202610121507';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -16,7 +16,7 @@
 })();
 </script>
 <title>격자 콜로니 계수</title>
-<meta name="version" content="202610121503">
+<meta name="version" content="202610121507">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -648,7 +648,14 @@ let drawQueued = 0;
 function requestDraw(){ if (!drawQueued) drawQueued = requestAnimationFrame(() => { drawQueued = 0; draw(); }); }
 // 점을 찍은 뒤 저장·옆 패널·목록 갱신은 잠깐 모았다가 한 번에 (연속 클릭 때 점이 바로바로 찍히도록)
 let afterEditT = 0;
-function afterEdit(p){ clearTimeout(afterEditT); save(p); afterEditT = setTimeout(() => { updateSide(); renderList(); }, 150); }
+function afterEdit(p){ clearTimeout(afterEditT); save(p); afterEditT = setTimeout(() => { updateSide(); updateListRow(p); }, 150); }
+// 점 하나 찍을 때는 목록 전체를 다시 그리지 않고 그 사진 줄의 숫자만 바꿈 (사진이 많을 때 느려지던 원인)
+function updateListRow(p){
+  const i = S.plates.indexOf(p), tr = $('list').querySelector(`tr[data-i="${i}"]`); if (!tr) return renderList();
+  const has = q => q.data.done || (q.data.marks && (q.data.marks.length || q.data.auto)) || Object.keys(q.data.cells).length > 0;
+  const td = tr.querySelector('td.n'); if (td) td.innerHTML = `${has(p) ? totals(p).sum : '–'}${p.label === 'N.C' ? ' <span class="muted">대조</span>' : ''}`;
+  const sm = $('list').querySelector('.lsum > .muted'); if (sm) sm.textContent = `계수한 판 ${S.plates.filter(has).length} / ${S.plates.length} · 완료 ${S.plates.filter(q => q.data.done).length}`;
+}
 function draw(){
   if (drawQueued){ cancelAnimationFrame(drawQueued); drawQueued = 0; }
   const p = cur(); ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,cv.width,cv.height);
