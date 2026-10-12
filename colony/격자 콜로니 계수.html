@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610111751';   /*APPVER*/
+  var MY = '202610121428';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -16,7 +16,7 @@
 })();
 </script>
 <title>격자 콜로니 계수</title>
-<meta name="version" content="202610111751">
+<meta name="version" content="202610121428">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -153,7 +153,7 @@ body.resizing{cursor:col-resize;user-select:none}
   <h1>격자 콜로니 계수<small>멤브레인 필터 배지 · 배포 SEOL(신승근)</small></h1>
   <label class="btn" title="여러 장 한꺼번에 선택 가능 (폴더 안에서 Ctrl+A). 사진·폴더를 화면에 끌어다 놓아도 됩니다. 연 사진은 목록에 추가됩니다.">사진 열기<input id="fileIn" type="file" accept="image/*,.jpg,.jpeg,.png" multiple hidden></label>
   <label class="btn" title="폴더를 고르면 안의 사진(하위 폴더 포함)을 한꺼번에 엽니다. 폴더 구조(예: 날짜 > 구역)가 왼쪽 목록에 그대로 묶입니다.">폴더 열기<input id="dirIn" type="file" webkitdirectory multiple hidden></label>
-  <span>회차 <input id="round" type="text" placeholder="예: 2회차" style="width:120px"></span>
+  <input id="round" type="hidden"><!-- 회차 칸은 화면에서 뺌. 회차는 폴더·파일 이름에서 자동으로 읽고, 예전 저장 자료를 찾는 열쇠로만 씀 -->
   <span class="muted" id="status"></span>
   <span class="muted" id="saveState" title="점을 찍을 때마다 이 브라우저에 자동 저장됩니다. 같은 회차·같은 사진을 다시 열면 이어서 작업합니다."></span>
   <span style="flex:1"></span>
