@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610122048';   /*APPVER*/
+  var MY = '202610122057';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -17,7 +17,7 @@
 </script>
 <title>격자 콜로니 계수</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CclipPath id='m'%3E%3Ccircle cx='29' cy='29' r='21'/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle cx='29' cy='29' r='27' fill='%23d6e8f2' stroke='%233f6f8a' stroke-width='3.5'/%3E%3Ccircle cx='29' cy='29' r='21' fill='%23fffdf6'/%3E%3Cg clip-path='url(%23m)' stroke='%238dbad1' stroke-width='1.6'%3E%3Cpath d='M19 4v50M29 4v50M39 4v50M4 19h50M4 29h50M4 39h50'/%3E%3C/g%3E%3Cg stroke='%237a4d12' stroke-width='1'%3E%3Ccircle cx='23' cy='22' r='4.6' fill='%23f2b84b'/%3E%3Ccircle cx='36' cy='33' r='5.2' fill='%23e9a23b'/%3E%3Ccircle cx='21' cy='37' r='3.6' fill='%23e07a5f'/%3E%3C/g%3E%3Ccircle cx='36' cy='33' r='8.4' fill='none' stroke='%238e5cd9' stroke-width='2.4'/%3E%3Ccircle cx='50' cy='50' r='12.5' fill='%232b6cb0' stroke='%23fff' stroke-width='2.5'/%3E%3Cpath d='M44.5 50.5l4 4 7.5-8.5' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-<meta name="version" content="202610122048">
+<meta name="version" content="202610122057">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -957,7 +957,8 @@ const erode = (a,w,h,s) => minMax(a,w,h,s,true), dilate = (a,w,h,s) => minMax(a,
 // 사진에서 막이 작게 찍힌 경우(기본)로 먼저 찾고, 잘 안 맞으면 막만 크게 잘라 낸 사진으로 보고 다시 찾음
 function findMembrane(img){
   const a = findMembraneR(img, AC.rMinF, AC.rMaxF); if (a.support >= 0.7) return a;   // 확실하면 그대로 (일반 사진은 0.8~1.0)
-  const b = findMembraneR(img, 0.3, 0.52); return b.support > a.support ? b : a;
+  // 큰 원(막을 크게 찍은 사진)이 작은 원과 지지도가 비슷하면 큰 원 — 작은 원은 뚜껑 라벨·글씨 쪽을 잘못 잡는 일이 많음 (2026-10-12 1MF-SV1)
+  const b = findMembraneR(img, 0.3, 0.52); return b.support >= 0.75 * a.support ? b : a;
 }
 function findMembraneR(img, rMinF, rMaxF){
   const W = img.naturalWidth, H = img.naturalHeight, s = 4, w = Math.floor(W/s), h = Math.floor(H/s);
@@ -1144,7 +1145,7 @@ const hasImp = p => !!(p && (p.data.marks || []).some(k => k.imp));
 // 하얗게 비친 작은 점(오래 배양돼 작게 반짝이는 흰 콜로니)도 셈 — 2026-10-12 사용자 요청: 1PW-DV9·DV21 재계수 기준을 기본 자동 계수로
 // 주변(반경 막의 3%)보다 16 이상 밝고 색이 거의 없는 작은 점. 뚜껑 반사로 밝아진 곳(주변 밝기 > 막 중앙값+10), 파란·보라 글씨 둘레, 막 가장자리(반지름 91% 밖)는 뺌
 // 크기 기준은 막 반지름(사진 해상도)에 맞춰 자동으로 늘고 줆
-const WHITE = { diff: 16, satMax: 45, glare: 10, edge: 0.91 };
+const WHITE = { diff: 12, satMax: 45, glare: 14, edge: 0.92 };
 function findWhiteSpots(p){
   const c = p.data.circle; if (!c) return [];
   const R = Math.round(c.r), s = Math.max(1, R / 610), x0 = Math.round(c.cx - R), y0 = Math.round(c.cy - R), W = 2 * R, H = 2 * R, N = W * H;
@@ -1172,7 +1173,7 @@ function findWhiteSpots(p){
 }
 // 회색기 도는 옅은 콜로니(주변보다 조금 어둡고 넓은 얼룩)도 셈 — 2026-10-12 사용자 요청 (2HE-SV2 등)
 // 막을 반지름 500px 로 줄여서: 인쇄 점선(작고 진한 점)을 지운 뒤, 넓은 주변(30px)보다 4 이상 어두운 동그란 얼룩(넓이 50px 이상·진하기 6 이상·길쭉하지 않음)
-const GREY = { diff: 4, minA: 50, peak: 6 };
+const GREY = { diff: 3, minA: 30, peak: 4.5 };
 function findGreySpots(p){ const T = GREY.diff;
   const c = p.data.circle, Rf = c.r, ds = Math.max(1, Rf / 500);   // 막 반지름 ~500px 로 줄여서 처리
   const R = Math.round(Rf / ds), W = 2 * R, H = 2 * R, N = W * H;
@@ -1198,10 +1199,28 @@ function findGreySpots(p){ const T = GREY.diff;
   return out;
 }
 
+// 한 줄로 늘어선 점(막의 접힌 자국·긁힌 선·격자선을 타고 잡힌 것)은 콜로니가 아님 — 2026-10-12 사용자 지적
+// 점마다 주변(막 반지름 12%) 점들이 거의 일직선으로 6개 이상 놓여 있으면 그 선 위 점들을 뺌
+function onLinePoints(pts, Rm){
+  const D = 0.12 * Rm, W = 0.014 * Rm, bad = new Set();
+  for (let i = 0; i < pts.length; i++){
+    const nb = []; for (let j = 0; j < pts.length; j++) if (Math.hypot(pts[j].x - pts[i].x, pts[j].y - pts[i].y) < D) nb.push(j);
+    if (nb.length < 6) continue;
+    let mx = 0, my = 0; for (const j of nb){ mx += pts[j].x; my += pts[j].y; } mx /= nb.length; my /= nb.length;
+    let sxx = 0, syy = 0, sxy = 0; for (const j of nb){ const dx = pts[j].x - mx, dy = pts[j].y - my; sxx += dx*dx; syy += dy*dy; sxy += dx*dy; }
+    const ang = 0.5 * Math.atan2(2*sxy, sxx - syy), ux = Math.cos(ang), uy = Math.sin(ang);
+    const on = nb.filter(j => Math.abs(-(pts[j].x - mx) * uy + (pts[j].y - my) * ux) < W);
+    if (on.length < 6) continue;
+    // 선 위 점들의 길이 방향 퍼짐이 충분히 길어야(짧게 뭉친 무리는 콜로니 덩어리일 수 있음)
+    const along = on.map(j => (pts[j].x - mx) * ux + (pts[j].y - my) * uy); const span = Math.max(...along) - Math.min(...along);
+    if (span > 0.08 * Rm && on.length / nb.length >= 0.6) for (const j of on) bad.add(j);
+  }
+  return bad;
+}
 async function autoCount(p, force){
   await ensureCircle(p); await yieldUI();
   const P = activeParams(), nc = await ncPoints(); const r = P ? findBlobsWith(p.img, p.data.circle, LEARN_SENS, LEARN_MINAREA) : findBlobs(p.img, p.data.circle);
-  const col = [], ncl = []; let refl = 0, filt = 0, mk = 0, gp = 0, faint = 0, dup = 0;
+  let col = []; const ncl = []; let refl = 0, filt = 0, mk = 0, gp = 0, faint = 0, dup = 0;
   if (!p.data.grid && !p.data.noGrid) autoGrid(p);   // 격자선 점선을 거르려면 격자가 먼저 있어야 함
   // 이미 센 점(다른 프로그램 표시 = 보라)과 겹치는 자리는 새로 찍지 않음 → 합계 = 이미 센 점 + 새로 찾은 콜로니
   const imps = (p.data.marks || []).filter(k => k.imp);
@@ -1220,6 +1239,9 @@ async function autoCount(p, force){
     let grey = [];
     if (p.label !== 'N.C'){ const gap = 14 * Math.max(1, p.data.circle.r / 610), taken = col.map(b => [b.x, b.y]).concat(manual.map(k => [k.x, k.y]), imps.map(k => [k.x, k.y]), white.map(w => [w.x, w.y]));
       grey = findGreySpots(p).filter(w => !taken.some(([x, y]) => Math.hypot(x - w.x, y - w.y) < gap)); }
+    { const all = col.map(b => ({x: b.x, y: b.y, o: b})).concat(white.map(w => ({x: w.x, y: w.y, o: w})), grey.map(w => ({x: w.x, y: w.y, o: w})));
+      const drop = new Set([...onLinePoints(all, p.data.circle.r)].map(i => all[i].o));
+      col = col.filter(b => !drop.has(b)); white = white.filter(w => !drop.has(w)); grey = grey.filter(w => !drop.has(w)); p.data.auto.onLine = drop.size; }
     p.data.auto.white = white.length; p.data.auto.grey = grey.length; p.data.auto.nc0 = col.length + white.length + grey.length;
     p.data.marks = manual.concat(col.map(b => ({x: Math.round(b.x), y: Math.round(b.y), r: Math.round(Math.sqrt(b.area/Math.PI) + 12), t: now})),
                                  white.map(w => ({x: Math.round(w.x), y: Math.round(w.y), r: Math.round(Math.sqrt(w.a / Math.PI) + 12), t: now, w: 1})),
