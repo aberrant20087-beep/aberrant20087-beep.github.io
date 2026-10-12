@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610121857';   /*APPVER*/
+  var MY = '202610122030';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -17,7 +17,7 @@
 </script>
 <title>격자 콜로니 계수</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CclipPath id='m'%3E%3Ccircle cx='29' cy='29' r='21'/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle cx='29' cy='29' r='27' fill='%23d6e8f2' stroke='%233f6f8a' stroke-width='3.5'/%3E%3Ccircle cx='29' cy='29' r='21' fill='%23fffdf6'/%3E%3Cg clip-path='url(%23m)' stroke='%238dbad1' stroke-width='1.6'%3E%3Cpath d='M19 4v50M29 4v50M39 4v50M4 19h50M4 29h50M4 39h50'/%3E%3C/g%3E%3Cg stroke='%237a4d12' stroke-width='1'%3E%3Ccircle cx='23' cy='22' r='4.6' fill='%23f2b84b'/%3E%3Ccircle cx='36' cy='33' r='5.2' fill='%23e9a23b'/%3E%3Ccircle cx='21' cy='37' r='3.6' fill='%23e07a5f'/%3E%3C/g%3E%3Ccircle cx='36' cy='33' r='8.4' fill='none' stroke='%238e5cd9' stroke-width='2.4'/%3E%3Ccircle cx='50' cy='50' r='12.5' fill='%232b6cb0' stroke='%23fff' stroke-width='2.5'/%3E%3Cpath d='M44.5 50.5l4 4 7.5-8.5' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-<meta name="version" content="202610121857">
+<meta name="version" content="202610122030">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -1138,7 +1138,38 @@ $('ncClear').onclick = () => { S.ncPlate = null; S.ncPts = null; idbPut('meta', 
 const isGridPrint = (p, b) => { const g = p.data.grid; if (!g || p.data.noGrid) return false;
   const t = toGrid(g, b.x, b.y), fu = t.u - Math.floor(t.u), fv = t.v - Math.floor(t.v), gd = Math.min(fu, 1 - fu, fv, 1 - fv);
   return gd < 0.10 && Math.sqrt(b.area / Math.PI) < 0.15 * g.size && b.sat < 15; };
+// 색이 전혀 없고 주변보다 어두운 점 = 인쇄 격자 점선(격자 맞춤이 잘 안 된 사진에서도 거름). 콜로니는 밝거나 색이 있음 — 2026-10-12 2TK-SV1 에서 격자 점 83개를 콜로니로 셌던 문제
+const isGreyPrint = b => !brightDom(b) && b.sat < 20;
 const hasImp = p => !!(p && (p.data.marks || []).some(k => k.imp));
+// 하얗게 비친 작은 점(오래 배양돼 작게 반짝이는 흰 콜로니)도 셈 — 2026-10-12 사용자 요청: 1PW-DV9·DV21 재계수 기준을 기본 자동 계수로
+// 주변(반경 막의 3%)보다 16 이상 밝고 색이 거의 없는 작은 점. 뚜껑 반사로 밝아진 곳(주변 밝기 > 막 중앙값+10), 파란·보라 글씨 둘레, 막 가장자리(반지름 91% 밖)는 뺌
+// 크기 기준은 막 반지름(사진 해상도)에 맞춰 자동으로 늘고 줆
+const WHITE = { diff: 16, satMax: 45, glare: 10, edge: 0.91 };
+function findWhiteSpots(p){
+  const c = p.data.circle; if (!c) return [];
+  const R = Math.round(c.r), s = Math.max(1, R / 610), x0 = Math.round(c.cx - R), y0 = Math.round(c.cy - R), W = 2 * R, H = 2 * R, N = W * H;
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d', {willReadFrequently: true}); g.drawImage(p.img, x0, y0, W, H, 0, 0, W, H);
+  const d = g.getImageData(0, 0, W, H).data, L = new Float32Array(N), sat = new Uint8Array(N), blueI = new Uint32Array((W + 1) * (H + 1));
+  for (let y = 0; y < H; y++){ let run = 0; for (let x = 0; x < W; x++){ const i = y * W + x, r = d[4*i], gg = d[4*i+1], b = d[4*i+2], mx = Math.max(r, gg, b), mn = Math.min(r, gg, b);
+    L[i] = 0.299 * r + 0.587 * gg + 0.114 * b; sat[i] = mx - mn; run += (b > r + 70 && b > gg + 40 && mx - mn > 90) ? 1 : 0; blueI[(y + 1) * (W + 1) + x + 1] = blueI[y * (W + 1) + x + 1] + run; } }
+  const rad = Math.max(6, Math.round(18 * s)), tmp = new Float32Array(N), bg = new Float32Array(N), k = 2 * rad + 1;
+  for (let y = 0; y < H; y++){ const o = y * W; let a = 0; for (let x = -rad; x <= rad; x++) a += L[o + Math.min(W - 1, Math.max(0, x))]; for (let x = 0; x < W; x++){ tmp[o + x] = a / k; a += L[o + Math.min(W - 1, x + rad + 1)] - L[o + Math.max(0, x - rad)]; } }
+  for (let x = 0; x < W; x++){ let a = 0; for (let y = -rad; y <= rad; y++) a += tmp[Math.min(H - 1, Math.max(0, y)) * W + x]; for (let y = 0; y < H; y++){ bg[y * W + x] = a / k; a += tmp[Math.min(H - 1, y + rad + 1) * W + x] - tmp[Math.max(0, y - rad) * W + x]; } }
+  const R2 = (R * WHITE.edge) ** 2, bgs = []; for (let y = 0; y < H; y += 7) for (let x = 0; x < W; x += 7) if ((x - R) ** 2 + (y - R) ** 2 < R2) bgs.push(bg[y * W + x]);
+  bgs.sort((a, b) => a - b); const med = bgs[bgs.length >> 1] || 0, pad = Math.round(22 * s);
+  const inkNear = (x, y) => { const xa = Math.max(0, x - pad), xb = Math.min(W, x + pad + 1), ya = Math.max(0, y - pad), yb = Math.min(H, y + pad + 1);
+    return blueI[yb * (W + 1) + xb] - blueI[ya * (W + 1) + xb] - blueI[yb * (W + 1) + xa] + blueI[ya * (W + 1) + xa] > 0; };
+  const mask = new Uint8Array(N);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){ const i = y * W + x; if ((x - R) ** 2 + (y - R) ** 2 > R2 || bg[i] > med + WHITE.glare) continue; if (L[i] - bg[i] > WHITE.diff && sat[i] < WHITE.satMax && !inkNear(x, y)) mask[i] = 1; }
+  const lab = new Int32Array(N), st = [], comps = [], minA = Math.max(2, Math.round(2 * s * s)); let id = 0;
+  for (let i = 0; i < N; i++){ if (!mask[i] || lab[i]) continue; id++; let a = 0, sx = 0, sy = 0; st.push(i); lab[i] = id;
+    while (st.length){ const j = st.pop(), x = j % W, y = (j / W) | 0; a++; sx += x; sy += y;
+      if (x > 0 && mask[j - 1] && !lab[j - 1]){ lab[j - 1] = id; st.push(j - 1); } if (x < W - 1 && mask[j + 1] && !lab[j + 1]){ lab[j + 1] = id; st.push(j + 1); }
+      if (y > 0 && mask[j - W] && !lab[j - W]){ lab[j - W] = id; st.push(j - W); } if (y < H - 1 && mask[j + W] && !lab[j + W]){ lab[j + W] = id; st.push(j + W); } }
+    if (a >= minA && a <= 1500 * s * s) comps.push({x: sx / a + x0, y: sy / a + y0, a}); }
+  const out = [], mg = 7 * s; for (const q of comps.sort((u, v) => v.a - u.a)) if (!out.some(w => Math.hypot(w.x - q.x, w.y - q.y) < mg)) out.push(q);
+  return out;
+}
 async function autoCount(p, force){
   await ensureCircle(p); await yieldUI();
   const P = activeParams(), nc = await ncPoints(); const r = P ? findBlobsWith(p.img, p.data.circle, LEARN_SENS, LEARN_MINAREA) : findBlobs(p.img, p.data.circle);
@@ -1147,14 +1178,20 @@ async function autoCount(p, force){
   // 이미 센 점(다른 프로그램 표시 = 보라)과 겹치는 자리는 새로 찍지 않음 → 합계 = 이미 센 점 + 새로 찾은 콜로니
   const imps = (p.data.marks || []).filter(k => k.imp);
   const onImp = b => imps.some(k => Math.hypot(k.x - b.x, k.y - b.y) <= HALF_OVERLAP * Math.max(Math.sqrt(b.area / Math.PI) + 12, MATCH_MIN_R));
-  for (const b of r.blobs){ const c = classify(b, nc, P); if (c === 'reflect') refl++; else if (c === 'nclike') ncl.push(b); else if (c === 'filtered') filt++; else if (c === 'faint') faint++; else if (c === 'marker') mk++; else if (isGridPrint(p, b)) gp++; else if (onImp(b)) dup++; else col.push(b); }
+  for (const b of r.blobs){ const c = classify(b, nc, P); if (c === 'reflect') refl++; else if (c === 'nclike') ncl.push(b); else if (c === 'filtered') filt++; else if (c === 'faint') faint++; else if (c === 'marker') mk++; else if (isGridPrint(p, b) || isGreyPrint(b)) gp++; else if (onImp(b)) dup++; else col.push(b); }
   if (p.label === 'N.C') col.length = 0;
  p.data.auto = {nc0: col.length, nclike: ncl.length, reflect: refl, filtered: filt, faint, dup, marker: mk, gridPrint: gp, tuned: !!P, excluded: +r.excluded.toFixed(3), nc: !!nc, at: new Date().toISOString(), applied: false};
   {
     // 직접 클릭한 점은 그대로 두고 자동 점만 새로 채움
     const manual = (p.data.marks || []).filter(k => k.manual);
     const now = Date.now();
-    p.data.marks = manual.concat(col.map(b => ({x: Math.round(b.x), y: Math.round(b.y), r: Math.round(Math.sqrt(b.area/Math.PI) + 12), t: now})));
+    // 하얗게 비친 작은 점: 이미 찾은 콜로니·직접 찍은 점·표시 점과 겹치지 않는 것만 더함 (N.C 판은 안 셈)
+    let white = [];
+    if (p.label !== 'N.C'){ const gap = 10 * Math.max(1, p.data.circle.r / 610), taken = col.map(b => [b.x, b.y]).concat(manual.map(k => [k.x, k.y]), imps.map(k => [k.x, k.y]));
+      white = findWhiteSpots(p).filter(w => !taken.some(([x, y]) => Math.hypot(x - w.x, y - w.y) < gap)); }
+    p.data.auto.white = white.length; p.data.auto.nc0 = col.length + white.length;
+    p.data.marks = manual.concat(col.map(b => ({x: Math.round(b.x), y: Math.round(b.y), r: Math.round(Math.sqrt(b.area/Math.PI) + 12), t: now})),
+                                 white.map(w => ({x: Math.round(w.x), y: Math.round(w.y), r: Math.round(Math.sqrt(w.a / Math.PI) + 12), t: now, w: 1})));
     p.data.auto.applied = true;
   }
   if (!p.data.grid) autoGrid(p);
