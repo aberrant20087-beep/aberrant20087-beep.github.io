@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610121507';   /*APPVER*/
+  var MY = '202610121539';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -16,7 +16,7 @@
 })();
 </script>
 <title>격자 콜로니 계수</title>
-<meta name="version" content="202610121507">
+<meta name="version" content="202610121539">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -1721,13 +1721,27 @@ $('btnUpdate').onclick = async () => { $('updVer').textContent = `지금 버전:
 $('updClose').onclick = () => $('updDlg').close();
 $('updCheck').onclick = async () => { updMsg('확인 중…'); const j = await checkOnline(false); if (!j) return;
   if (!confirm(`새 버전 ${verText(j.version)}\n\n${j.notes || ''}\n\n지금 업데이트할까요?`)) return;
-  try { const t = await (await fetch(updBase() + encodeURIComponent(j.file || '격자 콜로니 계수.html') + '?t=' + Date.now(), {cache: 'no-store'})).text(); await installVersion(t, '인터넷'); }
-  catch(e){ updMsg('새 버전을 받지 못했습니다: ' + (e && e.message || e)); } };
+  installOnline(j); };
 $('updFile').onclick = () => $('updIn').click();
 $('updIn').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (f) installVersion(await f.text(), f.name); };
 $('updBack').onclick = () => rollbackVersion();
-// 하루 한 번 조용히 새 버전 확인 (주소가 정해져 있을 때만)
-(() => { try { const k = LS_KEY + 'updChecked', today = new Date().toISOString().slice(0, 10); if (updBase() && localStorage.getItem(k) !== today){ localStorage.setItem(k, today); checkOnline(true); } } catch(e){} })();
+// 새 버전 알림: 프로그램을 열 때와 켜 둔 동안 30분마다 조용히 확인 → 새 버전이 있으면 화면 위에 알림 띠
+async function installOnline(j){
+  try { const t = await (await fetch(updBase() + encodeURIComponent(j.file || '격자 콜로니 계수.html') + '?t=' + Date.now(), {cache: 'no-store'})).text(); await installVersion(t, '인터넷'); }
+  catch(e){ alert('새 버전을 받지 못했습니다: ' + (e && e.message || e)); }
+}
+function notifyUpdate(j){
+  if (!j || S.updDismissed === j.version || document.getElementById('updBar')) return;
+  const bar = document.createElement('div'); bar.id = 'updBar';
+  bar.style.cssText = 'position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:9999;background:#2b3a55;color:#fff;border:1px solid #ff8a6b;border-radius:8px;padding:8px 12px;box-shadow:0 4px 16px rgba(0,0,0,.4);display:flex;gap:10px;align-items:center;font-size:13px;max-width:min(92vw,720px);word-break:keep-all';
+  const msg = document.createElement('span'); msg.textContent = `새 버전(${verText(j.version)})이 나왔습니다.${j.notes ? ' ' + j.notes : ''}`;
+  const go = document.createElement('button'); go.textContent = '지금 업데이트'; go.className = 'primary'; go.onclick = () => { go.disabled = true; go.textContent = '받는 중…'; installOnline(j); };
+  const later = document.createElement('button'); later.textContent = '나중에'; later.onclick = () => { S.updDismissed = j.version; bar.remove(); };
+  bar.append(msg, go, later); document.body.appendChild(bar);
+}
+(() => { if (!updBase() || APP_VERSION === 'dev') return;
+  const run = async () => notifyUpdate(await checkOnline(true));
+  setTimeout(run, 3000); setInterval(run, 30 * 60 * 1000); })();
 
 // ---------- 좌우 메뉴 폭 조절: 목록·오른쪽 메뉴 경계선을 끌어서 (폭은 이 브라우저에 기억, 두 번 클릭 = 원래 폭) ----------
 (() => {
