@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610122057';   /*APPVER*/
+  var MY = '202610122058';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -15,9 +15,9 @@
   } catch(e){}
 })();
 </script>
-<title>격자 콜로니 계수</title>
+<title>Colony Counter</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CclipPath id='m'%3E%3Ccircle cx='29' cy='29' r='21'/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle cx='29' cy='29' r='27' fill='%23d6e8f2' stroke='%233f6f8a' stroke-width='3.5'/%3E%3Ccircle cx='29' cy='29' r='21' fill='%23fffdf6'/%3E%3Cg clip-path='url(%23m)' stroke='%238dbad1' stroke-width='1.6'%3E%3Cpath d='M19 4v50M29 4v50M39 4v50M4 19h50M4 29h50M4 39h50'/%3E%3C/g%3E%3Cg stroke='%237a4d12' stroke-width='1'%3E%3Ccircle cx='23' cy='22' r='4.6' fill='%23f2b84b'/%3E%3Ccircle cx='36' cy='33' r='5.2' fill='%23e9a23b'/%3E%3Ccircle cx='21' cy='37' r='3.6' fill='%23e07a5f'/%3E%3C/g%3E%3Ccircle cx='36' cy='33' r='8.4' fill='none' stroke='%238e5cd9' stroke-width='2.4'/%3E%3Ccircle cx='50' cy='50' r='12.5' fill='%232b6cb0' stroke='%23fff' stroke-width='2.5'/%3E%3Cpath d='M44.5 50.5l4 4 7.5-8.5' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-<meta name="version" content="202610122057">
+<meta name="version" content="202610122058">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -152,7 +152,7 @@ body.resizing{cursor:col-resize;user-select:none}
 </head>
 <body>
 <header>
-  <h1><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CclipPath id='m'%3E%3Ccircle cx='29' cy='29' r='21'/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle cx='29' cy='29' r='27' fill='%23d6e8f2' stroke='%233f6f8a' stroke-width='3.5'/%3E%3Ccircle cx='29' cy='29' r='21' fill='%23fffdf6'/%3E%3Cg clip-path='url(%23m)' stroke='%238dbad1' stroke-width='1.6'%3E%3Cpath d='M19 4v50M29 4v50M39 4v50M4 19h50M4 29h50M4 39h50'/%3E%3C/g%3E%3Cg stroke='%237a4d12' stroke-width='1'%3E%3Ccircle cx='23' cy='22' r='4.6' fill='%23f2b84b'/%3E%3Ccircle cx='36' cy='33' r='5.2' fill='%23e9a23b'/%3E%3Ccircle cx='21' cy='37' r='3.6' fill='%23e07a5f'/%3E%3C/g%3E%3Ccircle cx='36' cy='33' r='8.4' fill='none' stroke='%238e5cd9' stroke-width='2.4'/%3E%3Ccircle cx='50' cy='50' r='12.5' fill='%232b6cb0' stroke='%23fff' stroke-width='2.5'/%3E%3Cpath d='M44.5 50.5l4 4 7.5-8.5' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" alt="" style="height:26px;width:26px;vertical-align:-6px;margin-right:8px">격자 콜로니 계수<small>멤브레인 필터 배지 · 배포 SEOL(신승근)</small></h1>
+  <h1><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CclipPath id='m'%3E%3Ccircle cx='29' cy='29' r='21'/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle cx='29' cy='29' r='27' fill='%23d6e8f2' stroke='%233f6f8a' stroke-width='3.5'/%3E%3Ccircle cx='29' cy='29' r='21' fill='%23fffdf6'/%3E%3Cg clip-path='url(%23m)' stroke='%238dbad1' stroke-width='1.6'%3E%3Cpath d='M19 4v50M29 4v50M39 4v50M4 19h50M4 29h50M4 39h50'/%3E%3C/g%3E%3Cg stroke='%237a4d12' stroke-width='1'%3E%3Ccircle cx='23' cy='22' r='4.6' fill='%23f2b84b'/%3E%3Ccircle cx='36' cy='33' r='5.2' fill='%23e9a23b'/%3E%3Ccircle cx='21' cy='37' r='3.6' fill='%23e07a5f'/%3E%3C/g%3E%3Ccircle cx='36' cy='33' r='8.4' fill='none' stroke='%238e5cd9' stroke-width='2.4'/%3E%3Ccircle cx='50' cy='50' r='12.5' fill='%232b6cb0' stroke='%23fff' stroke-width='2.5'/%3E%3Cpath d='M44.5 50.5l4 4 7.5-8.5' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" alt="" style="height:26px;width:26px;vertical-align:-6px;margin-right:8px">Colony Counter<small>멤브레인 필터 배지 · 배포 SEOL(신승근)</small></h1>
   <label class="btn" title="여러 장 한꺼번에 선택 가능 (폴더 안에서 Ctrl+A). 사진·폴더를 화면에 끌어다 놓아도 됩니다. 연 사진은 목록에 추가됩니다.">사진 열기<input id="fileIn" type="file" accept="image/*,.jpg,.jpeg,.png,.json" multiple hidden></label>
   <label class="btn" title="폴더를 고르면 안의 사진(하위 폴더 포함)을 한꺼번에 엽니다. 폴더 구조(예: 날짜 > 구역)가 왼쪽 목록에 그대로 묶입니다.">폴더 열기<input id="dirIn" type="file" webkitdirectory multiple hidden></label>
   <input id="round" type="hidden"><!-- 회차 칸은 화면에서 뺌. 회차는 폴더·파일 이름에서 자동으로 읽고, 예전 저장 자료를 찾는 열쇠로만 씀 -->
@@ -256,7 +256,7 @@ body.resizing{cursor:col-resize;user-select:none}
   <div class="muted">왼쪽 목록의 체크칸으로 저장할 사진을 고르세요 (머리글 체크 = 전체). 원본 크기 사진에 점·격자·칸 숫자와 콜로니 수를 적어 JPG로 저장합니다.</div>
   <div class="row"><button id="btnSaveChecked" class="primary">체크한 사진 저장 (0장)</button><button id="btnPng" title="지금 보고 있는 사진만">이 사진만 저장</button></div>
 
-  <div class="credit">격자 콜로니 계수<br>제작·배포 <b>SEOL(신승근)</b></div>
+  <div class="credit">Colony Counter<br>제작·배포 <b>SEOL(신승근)</b></div>
 </div>
 
 <script>
@@ -1584,8 +1584,8 @@ $('btnLearnAll').onclick = async () => {
 };
 // 학습 결과(맞춘 기준) 나누기: 다른 사람에게 주면 같은 기준으로 자동 계수
 $('btnParamsOut').onclick = () => { if (!S.autoParams) return alert('아직 맞춘 기준이 없습니다.');
-  const o = { app: '격자 콜로니 계수', by: 'SEOL(신승근)', params: S.autoParams, log: S.train.log.slice(-20) };
-  const b = new Blob([JSON.stringify(o, null, 1)], {type: 'application/json'}); downloadBlob(b, `격자 콜로니 계수_학습기준_${new Date().toISOString().slice(0,10)}.json`); };
+  const o = { app: 'Colony Counter', by: 'SEOL(신승근)', params: S.autoParams, log: S.train.log.slice(-20) };
+  const b = new Blob([JSON.stringify(o, null, 1)], {type: 'application/json'}); downloadBlob(b, `Colony Counter_학습기준_${new Date().toISOString().slice(0,10)}.json`); };
 $('paramsIn').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
   try { const o = JSON.parse(await f.text()); if (!o.params || (o.params.minPeak === undefined && !o.params.model)) throw 0;
     if (!confirm(`가져온 기준을 쓸까요?\n\n${paramText(o.params)}\n점수 ${scoreOf(o.params)}점 (${o.params.trainPlates}판으로 맞춤)`)) return;
@@ -1785,7 +1785,7 @@ function buildResultXlsx(T, listRows){
   return zipStore([
     {name: '[Content_Types].xml', data: x + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/xl/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>'},
     {name: '_rels/.rels', data: x + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>'},
-    {name: 'docProps/core.xml', data: x + '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>격자 콜로니 계수</dc:title><dc:creator>SEOL(신승근)</dc:creator><dc:description>격자 콜로니 계수 프로그램(제작·배포 SEOL(신승근))으로 작성</dc:description></cp:coreProperties>'},
+    {name: 'docProps/core.xml', data: x + '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Colony Counter</dc:title><dc:creator>SEOL(신승근)</dc:creator><dc:description>Colony Counter 프로그램(제작·배포 SEOL(신승근))으로 작성</dc:description></cp:coreProperties>'},
     {name: 'xl/workbook.xml', data: x + '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView/></bookViews><sheets><sheet name="미생물" sheetId="1" r:id="rId1"/><sheet name="사진별 목록" sheetId="2" r:id="rId2"/></sheets></workbook>'},
     {name: 'xl/_rels/workbook.xml.rels', data: x + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="theme/theme1.xml"/></Relationships>'},
     {name: 'xl/styles.xml', data: DATA_TPL.styles},
@@ -1811,7 +1811,7 @@ $('btnXlsx').onclick = () => {
   const blob = buildResultXlsx(resultTable(plates, has, labelOf, dateOf), rows);
   const tops = [...new Set(plates.map(p => groupParts(p).top).filter(Boolean))];
   const base = tops.length === 1 ? tops[0] : tops.length > 1 ? `${tops[0]} 외 ${tops.length - 1}개 폴더` : ($('round').value || '회차');
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${base.replace(/[\\/:*?"<>|]/g, '_')}_격자 콜로니 계수_${new Date().toISOString().slice(0,10)}.xlsx`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${base.replace(/[\\/:*?"<>|]/g, '_')}_Colony Counter_${new Date().toISOString().slice(0,10)}.xlsx`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
 };
 // 표시 사진: 원본 크기 사진 + 격자·점·칸 숫자 + 아래쪽 콜로니 수 → JPG
 async function annotatedBlob(p){
@@ -1825,14 +1825,14 @@ async function annotatedBlob(p){
   g.fillStyle = '#fff'; g.font = `${fs*.6}px "NanumSquareRound","Malgun Gothic", sans-serif`;
   // 둘째 줄: 사람이 클릭해 표시한 수. 「자동 계수」 버튼을 쓴 판만 자동 표시 수를 따로 적음
   const nClick = mk.filter(k => k.manual).length, nAuto = mk.length - nClick;
-  g.fillText(`격자 콜로니 계수  |  클릭 표시 ${nClick}개${nAuto ? ` · 자동 계수 표시 ${nAuto}개` : ''}  |  ${new Date().toISOString().slice(0,10)}`, fs*.5, top + fs*1.45);
+  g.fillText(`Colony Counter  |  클릭 표시 ${nClick}개${nAuto ? ` · 자동 계수 표시 ${nAuto}개` : ''}  |  ${new Date().toISOString().slice(0,10)}`, fs*.5, top + fs*1.45);
   return await new Promise(r => c.toBlob(r, 'image/jpeg', 0.92));
 }
 function updateCheckUI(){ const n = S.plates.filter(p => S.checked.has(p.id)).length; const b = document.getElementById('btnSaveChecked'); if (b && !b.disabled) b.textContent = `체크한 사진 저장 (${n}장)`;
   const d = document.getElementById('btnDelChecked'); if (d){ d.textContent = `체크한 사진 빼기 (${n}장)`; d.disabled = !n; }
   const ca = document.getElementById('ckAll'); if (ca){ ca.checked = n > 0 && n === S.plates.length; ca.indeterminate = n > 0 && n < S.plates.length; } }
 function downloadBlob(b, name){ const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }
-const outName = p => `${p.group ? p.group.replace(/\//g, '_') + '_' : (roundOf(p).trim() ? roundOf(p).trim() + '_' : '')}${p.name.replace(/\.[^.]+$/,'')}_격자 콜로니 계수.jpg`;
+const outName = p => `${p.group ? p.group.replace(/\//g, '_') + '_' : (roundOf(p).trim() ? roundOf(p).trim() + '_' : '')}${p.name.replace(/\.[^.]+$/,'')}_Colony Counter.jpg`;
 $('btnPng').onclick = async () => { const p = cur(); if (!p) return; downloadBlob(await annotatedBlob(p), outName(p)); };
 // 체크한 사진만 차례로 저장 (브라우저가 "여러 파일 다운로드 허용"을 한 번 물어볼 수 있음)
 $('btnSaveChecked').onclick = async () => {
@@ -1843,7 +1843,7 @@ $('btnSaveChecked').onclick = async () => {
   btn.disabled = false; btn.textContent = label; };
 
 // ---------- 업데이트: 새 버전으로 이 프로그램 파일을 직접 바꿔 씀 (찍은 점 등 저장된 작업은 그대로) ----------
-// UPDATE_BASE: 새 버전(version.json + 격자 콜로니 계수.html)을 올려 둔 인터넷 주소. 비어 있으면 「받은 업데이트 파일로 바꾸기」만 됨
+// UPDATE_BASE: 새 버전(version.json + Colony Counter.html)을 올려 둔 인터넷 주소. 비어 있으면 「받은 업데이트 파일로 바꾸기」만 됨
 const UPDATE_BASE = 'https://aberrant20087-beep.github.io/colony/';   // GitHub Pages (scripts\publish_update.ps1 로 올림)
 const APP_VERSION = (document.querySelector('meta[name=version]') || {}).content || 'dev';
 const verOf = t => (String(t).match(/<meta name="version" content="(\d+)"/) || [])[1] || '';
@@ -1863,9 +1863,9 @@ if (IN_ZIP){ const b = document.createElement('div');   // 화면 아래에 늘 
 const APP_KEY = 'gridcount:app:';
 function installVersion(text, from){
   const nv = verOf(text);
-  if (!text.includes('id="btnXlsx"') || !nv){ alert('격자 콜로니 계수 업데이트 파일이 아닙니다.'); return; }
+  if (!text.includes('id="btnXlsx"') || !nv){ alert('Colony Counter 업데이트 파일이 아닙니다.'); return; }
   if (APP_VERSION !== 'dev' && nv <= APP_VERSION && !confirm(`이 파일(${verText(nv)})은 지금 버전(${verText(APP_VERSION)})보다 새롭지 않습니다. 그래도 바꿀까요?`)) return;
-  if (IN_ZIP){ alert('지금 프로그램을 압축 파일 안에서 바로 열었습니다. 이 상태로는 작업 저장과 업데이트가 제대로 되지 않습니다.\n\n압축 파일을 마우스 오른쪽 → 「압축 풀기」로 풀고, 풀린 폴더의 「격자 콜로니 계수.html」을 열어 주세요.'); return; }
+  if (IN_ZIP){ alert('지금 프로그램을 압축 파일 안에서 바로 열었습니다. 이 상태로는 작업 저장과 업데이트가 제대로 되지 않습니다.\n\n압축 파일을 마우스 오른쪽 → 「압축 풀기」로 풀고, 풀린 폴더의 「Colony Counter.html」을 열어 주세요.'); return; }
   try {
     const prevCode = localStorage.getItem(APP_KEY + 'code'), prevVer = localStorage.getItem(APP_KEY + 'ver');
     localStorage.setItem(APP_KEY + 'code', text); localStorage.setItem(APP_KEY + 'ver', nv);
@@ -1906,7 +1906,7 @@ $('updIn').onchange = async e => { const f = e.target.files[0]; e.target.value =
 $('updBack').onclick = () => rollbackVersion();
 // 새 버전 알림: 프로그램을 열 때와 켜 둔 동안 30분마다 조용히 확인 → 새 버전이 있으면 화면 위에 알림 띠
 async function installOnline(j){
-  try { const t = await (await fetch(updBase() + encodeURIComponent(j.file || '격자 콜로니 계수.html') + '?t=' + Date.now(), {cache: 'no-store'})).text(); await installVersion(t, '인터넷'); }
+  try { const t = await (await fetch(updBase() + encodeURIComponent(j.file || 'Colony Counter.html') + '?t=' + Date.now(), {cache: 'no-store'})).text(); await installVersion(t, '인터넷'); }
   catch(e){ alert('새 버전을 받지 못했습니다: ' + (e && e.message || e)); }
 }
 function notifyUpdate(j){
