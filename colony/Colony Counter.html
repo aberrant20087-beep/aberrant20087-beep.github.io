@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610122058';   /*APPVER*/
+  var MY = '202610122105';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -17,7 +17,7 @@
 </script>
 <title>Colony Counter</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CclipPath id='m'%3E%3Ccircle cx='29' cy='29' r='21'/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle cx='29' cy='29' r='27' fill='%23d6e8f2' stroke='%233f6f8a' stroke-width='3.5'/%3E%3Ccircle cx='29' cy='29' r='21' fill='%23fffdf6'/%3E%3Cg clip-path='url(%23m)' stroke='%238dbad1' stroke-width='1.6'%3E%3Cpath d='M19 4v50M29 4v50M39 4v50M4 19h50M4 29h50M4 39h50'/%3E%3C/g%3E%3Cg stroke='%237a4d12' stroke-width='1'%3E%3Ccircle cx='23' cy='22' r='4.6' fill='%23f2b84b'/%3E%3Ccircle cx='36' cy='33' r='5.2' fill='%23e9a23b'/%3E%3Ccircle cx='21' cy='37' r='3.6' fill='%23e07a5f'/%3E%3C/g%3E%3Ccircle cx='36' cy='33' r='8.4' fill='none' stroke='%238e5cd9' stroke-width='2.4'/%3E%3Ccircle cx='50' cy='50' r='12.5' fill='%232b6cb0' stroke='%23fff' stroke-width='2.5'/%3E%3Cpath d='M44.5 50.5l4 4 7.5-8.5' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-<meta name="version" content="202610122058">
+<meta name="version" content="202610122105">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -220,7 +220,7 @@ body.resizing{cursor:col-resize;user-select:none}
   </div>
  <div class="row"><button id="btnAutoAll" class="primary">전체 판 자동 계수</button><button id="btnAutoOne">이 판 자동 계수</button></div>
   <div class="row"><button id="btnAutoClearAll" title="모든 판의 자동 계수 점(하늘색)만 지움">전체 판 자동 계수 지우기</button></div>
-  <div class="muted">하늘색 고리 = 자동 계수 점, 주황 고리 = 직접 클릭한 점. 자동 점은 한 번 클릭으로는 지워지지 않고, <b>더블클릭</b>하거나 「자동 계수 지우기」를 눌러야 지워집니다.</div>
+  <div class="muted">하늘색 고리 = 자동 계수 점, 주황 고리 = 직접 클릭한 점. 점 위를 <b>한 번 클릭</b>하면 자동 점·직접 점 모두 지워집니다. 전부 지우려면 「자동 계수 지우기」.</div>
   <div class="muted" id="autoInfo">같은 회차 N.C 판에 있는 점 수준은 빼고(NC0 기준) 셉니다.</div>
   <div class="row"><label><input type="checkbox" id="showMarks" checked> 콜로니 점·원 표시</label></div>
 
@@ -231,7 +231,7 @@ body.resizing{cursor:col-resize;user-select:none}
   <div id="cmpAll" class="cmp"></div>
 
   <h2>클릭 계수 (기본)</h2>
-  <div class="muted">콜로니 클릭 = 주황 점 (칸 오른쪽 위에 칸별 개수), 주황 점 다시 클릭 = 삭제, 하늘 점 더블클릭 = 삭제, 좌클릭 끌기 = 화면 이동, 휠 = 확대. 점 크기는 사진 위 「점」 막대나 <kbd>[</kbd> <kbd>]</kbd> 키로 조절.</div>
+  <div class="muted">콜로니 클릭 = 주황 점 (칸 오른쪽 위에 칸별 개수), 점 위 클릭 = 삭제(주황·하늘 모두), 좌클릭 끌기 = 화면 이동, 휠 = 확대. 점 크기는 사진 위 「점」 막대나 <kbd>[</kbd> <kbd>]</kbd> 키로 조절.</div>
   <div class="row"><button id="btnUndo" title="마지막에 찍은 점 지우기 (Ctrl+Z)">마지막 점 취소</button></div>
 
   <h2>1. 막 원 지정</h2>
@@ -720,7 +720,7 @@ function updateHint(){
     pickColor: '다른 프로그램이 그린 표시(점·동그라미) 하나를 정확히 클릭하세요 — 그 색으로 셉니다 · Esc = 취소',
     grid: S.pick.length === 0 ? '격자 교차점 A 클릭 — 0/2 찍힘' : `A 찍힘(빨간 점) — 같은 선을 따라 ${$('gridN').value}칸 떨어진 교차점 B 클릭 — 1/2 찍힘`,
     align: '정렬 미세조정: 방향키 이동 · Q/E 회전 · +/- 간격 · Shift=크게 · Enter/Esc 끝',
-    mark: `콜로니 클릭 = 점 찍기 · 주황 점 다시 클릭 = 삭제 · 하늘 점 더블클릭 = 삭제 · 우클릭 = 센 칸 빗금 · Ctrl+Z = 마지막 점 취소 — 이 판 ${totals(p).sum}개`,
+    mark: `콜로니 클릭 = 점 찍기 · 점 위 클릭 = 삭제 · 우클릭 = 센 칸 빗금 · Ctrl+Z = 마지막 점 취소 — 이 판 ${totals(p).sum}개`,
     count: !p.data.circle ? '먼저 「막 가장자리 3점 클릭」' : !p.data.grid ? '다음 「격자 교차점 2점 클릭」' : '숫자 직접 입력: 칸 클릭 후 숫자 · T/Esc = 점 찍기로 돌아가기'
   }[S.mode];
   // 항목별로 끊어 줄바꿈이 항목 사이에서만 일어나게
@@ -801,7 +801,7 @@ function endPointer(e){
 cv.addEventListener('pointerup', endPointer);
 cv.addEventListener('pointercancel', endPointer);
 // 더블클릭 = 자동 점(하늘·빨간 겹침 고리의 자동 쪽) 지우기. 앞선 두 번의 클릭은 직접 점 찍기→지우기로 상쇄됨
-cv.addEventListener('dblclick', e => {
+if (false) cv.addEventListener('dblclick', e => {   /* 예전: 더블클릭으로 자동 점 지우기 → 한 번 클릭으로 바뀜 */
   const p = cur(); if (!p || !p.img || S.mode !== 'mark' || !p.data.marks) return;
   const r = cv.getBoundingClientRect(), pt = scr2img(e.clientX - r.left, e.clientY - r.top); if (!isFinite(pt.x)) return;
   const lim = Math.max(10, S.dotPx + 5) / S.view.s; let hit = -1, hd = 1e9;
@@ -828,9 +828,9 @@ function handleClick(sx, sy){
     draw(); return; }
   if (S.mode === 'mark'){ const d = p.data; if (!d.marks) d.marks = [];
     // 원 중심 근처 클릭 = 삭제 (큰 원 안에서도 작은 콜로니를 추가할 수 있게)
-    // 한 번 클릭은 직접 점(주황)만 지움. 자동 점(하늘)은 더블클릭이나 「자동 계수 지우기」로만 지워짐 → 자동 점 옆을 눌러도 직접 점이 찍힘
+    // 점 위를 한 번 클릭 = 그 점 지우기 (직접 찍은 점·자동 계수 점 모두, 2026-10-12 사용자 요청). 점 바로 위가 아니면 새 점이 찍힘
     let hit = -1, hd = 1e9;
-    d.marks.forEach((k, idx) => { if (!k.manual) return; const dd = Math.hypot(k.x - pt.x, k.y - pt.y); const lim = Math.max(8, S.dotPx + 3) / S.view.s;   // 점 위(화면 기준) 클릭 = 그 점 삭제
+    d.marks.forEach((k, idx) => { const dd = Math.hypot(k.x - pt.x, k.y - pt.y); const lim = Math.max(8, S.dotPx + 3) / S.view.s;   // 점 위(화면 기준) 클릭 = 그 점 삭제
       if (dd <= lim && dd < hd){ hd = dd; hit = idx; } });
     if (hit >= 0) d.marks.splice(hit, 1); else d.marks.push({x: Math.round(pt.x), y: Math.round(pt.y), r: 0, manual: true, t: Date.now()});
     draw(); afterEdit(p); return; }
@@ -1200,20 +1200,21 @@ function findGreySpots(p){ const T = GREY.diff;
 }
 
 // 한 줄로 늘어선 점(막의 접힌 자국·긁힌 선·격자선을 타고 잡힌 것)은 콜로니가 아님 — 2026-10-12 사용자 지적
-// 점마다 주변(막 반지름 12%) 점들이 거의 일직선으로 6개 이상 놓여 있으면 그 선 위 점들을 뺌
+// 점마다 여러 방향으로 좁은 띠(폭 막 반지름 1.2%, 길이 ±25%)를 그어 보고, 띠 안 점 수가 우연히 들어갈 수(전체 밀도 기준)의 4배 이상이고 7개 이상이면 그 띠의 점들을 뺌
 function onLinePoints(pts, Rm){
-  const D = 0.12 * Rm, W = 0.014 * Rm, bad = new Set();
+  const D = 0.25 * Rm, W = 0.006 * Rm, bad = new Set(), dens = pts.length / (Math.PI * Rm * Rm), expect = dens * (2 * W) * (2 * D);
+  const need = Math.max(7, Math.ceil(4 * expect));
   for (let i = 0; i < pts.length; i++){
-    const nb = []; for (let j = 0; j < pts.length; j++) if (Math.hypot(pts[j].x - pts[i].x, pts[j].y - pts[i].y) < D) nb.push(j);
-    if (nb.length < 6) continue;
-    let mx = 0, my = 0; for (const j of nb){ mx += pts[j].x; my += pts[j].y; } mx /= nb.length; my /= nb.length;
-    let sxx = 0, syy = 0, sxy = 0; for (const j of nb){ const dx = pts[j].x - mx, dy = pts[j].y - my; sxx += dx*dx; syy += dy*dy; sxy += dx*dy; }
-    const ang = 0.5 * Math.atan2(2*sxy, sxx - syy), ux = Math.cos(ang), uy = Math.sin(ang);
-    const on = nb.filter(j => Math.abs(-(pts[j].x - mx) * uy + (pts[j].y - my) * ux) < W);
-    if (on.length < 6) continue;
-    // 선 위 점들의 길이 방향 퍼짐이 충분히 길어야(짧게 뭉친 무리는 콜로니 덩어리일 수 있음)
-    const along = on.map(j => (pts[j].x - mx) * ux + (pts[j].y - my) * uy); const span = Math.max(...along) - Math.min(...along);
-    if (span > 0.08 * Rm && on.length / nb.length >= 0.6) for (const j of on) bad.add(j);
+    const nb = []; for (let j = 0; j < pts.length; j++){ const dx = pts[j].x - pts[i].x, dy = pts[j].y - pts[i].y; if (dx*dx + dy*dy < D*D) nb.push([j, dx, dy]); }
+    if (nb.length < need) continue;
+    for (let a = 0; a < 180; a += 3){
+      const ux = Math.cos(a * Math.PI / 180), uy = Math.sin(a * Math.PI / 180);
+      const on = nb.filter(([, dx, dy]) => Math.abs(-dx * uy + dy * ux) < W);
+      if (on.length < need) continue;
+      const al = on.map(([, dx, dy]) => dx * ux + dy * uy).sort((u, v) => u - v);
+      if (al[al.length - 1] - al[0] < 0.12 * Rm) continue;   // 짧게 뭉친 무리는 콜로니 덩어리일 수 있음
+      for (const [j] of on) bad.add(j);
+    }
   }
   return bad;
 }
@@ -1241,7 +1242,7 @@ async function autoCount(p, force){
       grey = findGreySpots(p).filter(w => !taken.some(([x, y]) => Math.hypot(x - w.x, y - w.y) < gap)); }
     { const all = col.map(b => ({x: b.x, y: b.y, o: b})).concat(white.map(w => ({x: w.x, y: w.y, o: w})), grey.map(w => ({x: w.x, y: w.y, o: w})));
       const drop = new Set([...onLinePoints(all, p.data.circle.r)].map(i => all[i].o));
-      col = col.filter(b => !drop.has(b)); white = white.filter(w => !drop.has(w)); grey = grey.filter(w => !drop.has(w)); p.data.auto.onLine = drop.size; }
+      col = col.filter(b => !drop.has(b) || b.sat >= 40);   /* 색이 뚜렷한 콜로니(노랑·주황 등)는 줄에 걸려도 남김 */ white = white.filter(w => !drop.has(w)); grey = grey.filter(w => !drop.has(w)); p.data.auto.onLine = drop.size; }
     p.data.auto.white = white.length; p.data.auto.grey = grey.length; p.data.auto.nc0 = col.length + white.length + grey.length;
     p.data.marks = manual.concat(col.map(b => ({x: Math.round(b.x), y: Math.round(b.y), r: Math.round(Math.sqrt(b.area/Math.PI) + 12), t: now})),
                                  white.map(w => ({x: Math.round(w.x), y: Math.round(w.y), r: Math.round(Math.sqrt(w.a / Math.PI) + 12), t: now, w: 1})),
