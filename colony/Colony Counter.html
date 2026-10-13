@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610122107';   /*APPVER*/
+  var MY = '202610130941';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -17,7 +17,7 @@
 </script>
 <title>Colony Counter</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CclipPath id='m'%3E%3Ccircle cx='29' cy='29' r='21'/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle cx='29' cy='29' r='27' fill='%23d6e8f2' stroke='%233f6f8a' stroke-width='3.5'/%3E%3Ccircle cx='29' cy='29' r='21' fill='%23fffdf6'/%3E%3Cg clip-path='url(%23m)' stroke='%238dbad1' stroke-width='1.6'%3E%3Cpath d='M19 4v50M29 4v50M39 4v50M4 19h50M4 29h50M4 39h50'/%3E%3C/g%3E%3Cg stroke='%237a4d12' stroke-width='1'%3E%3Ccircle cx='23' cy='22' r='4.6' fill='%23f2b84b'/%3E%3Ccircle cx='36' cy='33' r='5.2' fill='%23e9a23b'/%3E%3Ccircle cx='21' cy='37' r='3.6' fill='%23e07a5f'/%3E%3C/g%3E%3Ccircle cx='36' cy='33' r='8.4' fill='none' stroke='%238e5cd9' stroke-width='2.4'/%3E%3Ccircle cx='50' cy='50' r='12.5' fill='%232b6cb0' stroke='%23fff' stroke-width='2.5'/%3E%3Cpath d='M44.5 50.5l4 4 7.5-8.5' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-<meta name="version" content="202610122107">
+<meta name="version" content="202610130941">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -1164,10 +1164,10 @@ function findWhiteSpots(p){
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){ const i = y * W + x; if ((x - R) ** 2 + (y - R) ** 2 > R2 || bg[i] > med + WHITE.glare) continue; if (L[i] - bg[i] > WHITE.diff && sat[i] < WHITE.satMax && !inkNear(x, y)) mask[i] = 1; }
   const lab = new Int32Array(N), st = [], comps = [], minA = Math.max(2, Math.round(2 * s * s)); let id = 0;
   for (let i = 0; i < N; i++){ if (!mask[i] || lab[i]) continue; id++; let a = 0, sx = 0, sy = 0; st.push(i); lab[i] = id;
-    while (st.length){ const j = st.pop(), x = j % W, y = (j / W) | 0; a++; sx += x; sy += y;
+    let pk = 0; while (st.length){ const j = st.pop(), x = j % W, y = (j / W) | 0; a++; sx += x; sy += y; if (L[j] - bg[j] > pk) pk = L[j] - bg[j];
       if (x > 0 && mask[j - 1] && !lab[j - 1]){ lab[j - 1] = id; st.push(j - 1); } if (x < W - 1 && mask[j + 1] && !lab[j + 1]){ lab[j + 1] = id; st.push(j + 1); }
       if (y > 0 && mask[j - W] && !lab[j - W]){ lab[j - W] = id; st.push(j - W); } if (y < H - 1 && mask[j + W] && !lab[j + W]){ lab[j + W] = id; st.push(j + W); } }
-    if (a >= minA && a <= 1500 * s * s) comps.push({x: sx / a + x0, y: sy / a + y0, a}); }
+    if (a >= minA && a <= 1500 * s * s) comps.push({x: sx / a + x0, y: sy / a + y0, a, pk}); }
   const out = [], mg = 7 * s; for (const q of comps.sort((u, v) => v.a - u.a)) if (!out.some(w => Math.hypot(w.x - q.x, w.y - q.y) < mg)) out.push(q);
   return out;
 }
@@ -1218,39 +1218,55 @@ function onLinePoints(pts, Rm){
   }
   return bad;
 }
+/* 자동 계수는 사용자가 직접 찍은 점으로 학습한 뒤에만 함 (2026-10-13 사용자 지시). 학습 전에는 점을 하나도 찍지 않음 */
+function learnedReady(){ return !!activeParams(); }
+function notLearnedMsg(){
+  const n = Object.keys(S.train.samples || {}).length, P = S.autoParams;
+  if (!n) return '아직 학습 전이라 자동 계수를 하지 않습니다.\n\n직접 콜로니를 찍은 판(주황 점)을 2판 이상 만들고, 각 판에서 「이 판으로 학습」을 누르세요(또는 ✔ 완료 표시). 학습이 끝나면 자동 계수가 켜집니다.';
+  if (n < 2) return `학습한 판이 ${n}판뿐이라 아직 자동 계수를 하지 않습니다.\n\n직접 찍은 판을 1판 더 학습시키면(모두 2판 이상) 새 판 예측 점수를 확인한 뒤 자동 계수가 켜집니다.`;
+  return `학습한 판 ${n}판으로 맞춘 모델의 새 판 예측 점수가 ${P && P.cvF1 ? Math.round(P.cvF1 * 100) : 0}점이라(50점 이상이어야 씀) 아직 자동 계수를 하지 않습니다.\n\n직접 찍은 판을 더 학습시켜 주세요.`;
+}/* ---------- 자동 계수 v4 (2026-10-13 사용자 지시): 사용자가 직접 찍은 점으로만 학습해서 셈, 학습 전에는 아무것도 찍지 않음 ----------
+   후보 = 막 안에서 찾을 수 있는 모든 점: ① 색·어두움 점(findBlobsWith) ② 하얗게 비친 작은 점(findWhiteSpots) ③ 회색기 도는 옅은 얼룩(findGreySpots)
+   후보마다 특징(크기·종류·진하기·색·어두움·밝음·반사·인쇄점 모양·한 줄로 늘어섬·막 가장자리 거리)을 매겨 두고,
+   사용자가 찍은 점과 겹친 후보 = 콜로니, 아닌 후보 = 콜로니 아님으로 모델을 맞춤 → 그 모델이 「콜로니」라고 한 후보만 자동 계수 */
+const FEATS_V4 = ['크기', '흰 점', '회색 얼룩', '진하기', '색', '어두움', '밝음', '반사', '밝음 위주', '인쇄 점 모양', '한 줄로 늘어섬', '가장자리 거리'];
+function allCandidates(p){
+  const c = p.data.circle, sc = Math.max(1, c.r / 610), out = [];
+  if (!p.data.grid && !p.data.noGrid) autoGrid(p);
+  const r = findBlobsWith(p.img, c, LEARN_SENS, LEARN_MINAREA);
+  for (const b of r.blobs){ if (b.sat >= MARKER_SAT) continue;   /* 다른 프로그램이 그린 진한 표시는 후보 아님 */
+    out.push({x: b.x, y: b.y, kind: 0, area: b.area, peak: b.peak, sat: b.sat, dark: b.dark, bright: b.bright, refl: isReflect(b) ? 1 : 0, bdom: brightDom(b) ? 1 : 0,
+              print: (isGridPrint(p, b) || isGreyPrint(b)) ? 1 : 0}); }
+  const near = (q, gap) => out.some(o => Math.hypot(o.x - q.x, o.y - q.y) < gap);
+  for (const w of findWhiteSpots(p)) if (!near(w, 10 * sc)) out.push({x: w.x, y: w.y, kind: 1, area: w.a, peak: w.pk || 0, sat: 0, dark: 0, bright: w.pk || 0, refl: 0, bdom: 1, print: 0});
+  for (const g of findGreySpots(p)) if (!near(g, 14 * sc)) out.push({x: g.x, y: g.y, kind: 2, area: g.a, peak: g.pk || 0, sat: 0, dark: g.pk || 0, bright: 0, refl: 0, bdom: 0, print: 0});
+  const line = onLinePoints(out, c.r);
+  out.forEach((o, i) => { o.line = line.has(i) ? 1 : 0; o.rad = Math.hypot(o.x - c.cx, o.y - c.cy) / c.r;
+    o.f = [Math.log(1 + o.area / (sc * sc)), o.kind === 1 ? 1 : 0, o.kind === 2 ? 1 : 0, o.peak, o.sat, o.dark, o.bright, o.refl, o.bdom, o.print, o.line, o.rad]; });
+  return { cands: out, excluded: r.excluded };
+}
 async function autoCount(p, force){
+  if (!learnedReady()) return { nc0: 0, applied: false, notLearned: true };
   await ensureCircle(p); await yieldUI();
-  const P = activeParams(), nc = await ncPoints(); const r = P ? findBlobsWith(p.img, p.data.circle, LEARN_SENS, LEARN_MINAREA) : findBlobs(p.img, p.data.circle);
-  let col = []; const ncl = []; let refl = 0, filt = 0, mk = 0, gp = 0, faint = 0, dup = 0;
-  if (!p.data.grid && !p.data.noGrid) autoGrid(p);   // 격자선 점선을 거르려면 격자가 먼저 있어야 함
-  // 이미 센 점(다른 프로그램 표시 = 보라)과 겹치는 자리는 새로 찍지 않음 → 합계 = 이미 센 점 + 새로 찾은 콜로니
-  const imps = (p.data.marks || []).filter(k => k.imp);
-  const onImp = b => imps.some(k => Math.hypot(k.x - b.x, k.y - b.y) <= HALF_OVERLAP * Math.max(Math.sqrt(b.area / Math.PI) + 12, MATCH_MIN_R));
-  for (const b of r.blobs){ const c = classify(b, nc, P); if (c === 'reflect') refl++; else if (c === 'nclike') ncl.push(b); else if (c === 'filtered') filt++; else if (c === 'faint') faint++; else if (c === 'marker') mk++; else if (isGridPrint(p, b) || isGreyPrint(b)) gp++; else if (onImp(b)) dup++; else col.push(b); }
-  if (p.label === 'N.C') col.length = 0;
- p.data.auto = {nc0: col.length, nclike: ncl.length, reflect: refl, filtered: filt, faint, dup, marker: mk, gridPrint: gp, tuned: !!P, excluded: +r.excluded.toFixed(3), nc: !!nc, at: new Date().toISOString(), applied: false};
-  {
-    // 직접 클릭한 점은 그대로 두고 자동 점만 새로 채움
-    const manual = (p.data.marks || []).filter(k => k.manual);
-    const now = Date.now();
-    // 하얗게 비친 작은 점: 이미 찾은 콜로니·직접 찍은 점·표시 점과 겹치지 않는 것만 더함 (N.C 판은 안 셈)
-    let white = [];
-    if (p.label !== 'N.C'){ const gap = 10 * Math.max(1, p.data.circle.r / 610), taken = col.map(b => [b.x, b.y]).concat(manual.map(k => [k.x, k.y]), imps.map(k => [k.x, k.y]));
-      white = findWhiteSpots(p).filter(w => !taken.some(([x, y]) => Math.hypot(x - w.x, y - w.y) < gap)); }
-    let grey = [];
-    if (p.label !== 'N.C'){ const gap = 14 * Math.max(1, p.data.circle.r / 610), taken = col.map(b => [b.x, b.y]).concat(manual.map(k => [k.x, k.y]), imps.map(k => [k.x, k.y]), white.map(w => [w.x, w.y]));
-      grey = findGreySpots(p).filter(w => !taken.some(([x, y]) => Math.hypot(x - w.x, y - w.y) < gap)); }
-    { const all = col.map(b => ({x: b.x, y: b.y, o: b})).concat(white.map(w => ({x: w.x, y: w.y, o: w})), grey.map(w => ({x: w.x, y: w.y, o: w})));
-      const drop = new Set([...onLinePoints(all, p.data.circle.r)].map(i => all[i].o));
-      col = col.filter(b => !drop.has(b) || b.sat >= 40);   /* 색이 뚜렷한 콜로니(노랑·주황 등)는 줄에 걸려도 남김 */ white = white.filter(w => !drop.has(w)); grey = grey.filter(w => !drop.has(w)); p.data.auto.onLine = drop.size; }
-    p.data.auto.white = white.length; p.data.auto.grey = grey.length; p.data.auto.nc0 = col.length + white.length + grey.length;
-    p.data.marks = manual.concat(col.map(b => ({x: Math.round(b.x), y: Math.round(b.y), r: Math.round(Math.sqrt(b.area/Math.PI) + 12), t: now})),
-                                 white.map(w => ({x: Math.round(w.x), y: Math.round(w.y), r: Math.round(Math.sqrt(w.a / Math.PI) + 12), t: now, w: 1})),
-                                 grey.map(w => ({x: Math.round(w.x), y: Math.round(w.y), r: Math.round(Math.sqrt(w.a / Math.PI) + 12), t: now, g: 1})));
-    p.data.auto.applied = true;
-  }
+  const P = activeParams(), m = P.model, R = allCandidates(p);
+  const manual = (p.data.marks || []).filter(k => k.manual), imps = (p.data.marks || []).filter(k => k.imp);
+  const taken = manual.map(k => [k.x, k.y]).concat(imps.map(k => [k.x, k.y])), gap = 10 * Math.max(1, p.data.circle.r / 610);
+  const keep = p.label === 'N.C' ? [] : R.cands.filter(o => lrProb(m, o.f) >= m.thr && !taken.some(([x, y]) => Math.hypot(x - o.x, y - o.y) < gap));
+  const now = Date.now();
+  p.data.marks = manual.concat(keep.map(o => ({x: Math.round(o.x), y: Math.round(o.y), r: Math.round(Math.sqrt(o.area / Math.PI) + 12), t: now, ...(o.kind === 1 ? {w: 1} : o.kind === 2 ? {g: 1} : {})})));
+  p.data.auto = { nc0: keep.length, cands: R.cands.length, white: keep.filter(o => o.kind === 1).length, grey: keep.filter(o => o.kind === 2).length,
+                  tuned: true, learned: P.trainPlates, excluded: +R.excluded.toFixed(3), at: new Date().toISOString(), applied: true, view: 1 };
   if (!p.data.grid) autoGrid(p);
   save(p); return p.data.auto;
+}
+// 판 하나를 학습 자료로: 모든 후보와 그 특징 + 사용자가 직접 찍은 점(주황). 다른 프로그램 표시(보라)는 학습에 안 씀
+async function sampleFromPlate(p){
+  await ensureCircle(p); const R = allCandidates(p);
+  const s = { v: 4, round: $('round').value || '', name: p.name, at: new Date().toISOString(),
+    man: p.data.marks.filter(k => k.manual && !k.imp).map(k => ({x: Math.round(k.x), y: Math.round(k.y)})),
+    cands: R.cands.map(o => ({x: Math.round(o.x), y: Math.round(o.y), area: o.area, f: o.f.map(v => +(+v).toFixed(3))})) };
+  if (p !== cur()) p.img = null;
+  return s;
 }
 // ---------- 다른 프로그램으로 센 사진: 그 프로그램이 그린 표시(색 점·동그라미)를 찾아 셈 ----------
 // 표시 색: 「색 찍어서 세기」로 고른 색, 없으면 막 안에서 가장 많이 쓰인 진한 색(콜로니·한천은 색이 옅어 걸리지 않음)
@@ -1370,6 +1386,7 @@ const hasAuto = p => !!(p && p.data.marks && p.data.marks.some(k => !k.manual));
 // 이 판 자동 계수: 누를 때마다 켜기/끄기 (자동 점이 있으면 지우기)
 $('btnAutoOne').onclick = async () => { const p = cur(); if (!p) return;
   if (hasAuto(p)){ clearAuto(p); updateSide(); renderList(); draw(); return; }
+  if (!learnedReady()){ alert(notLearnedMsg()); return; }
   $('autoInfo').textContent = '계수 중…'; await yieldUI();
   const a = await autoCount(p, true); $('autoInfo').textContent = autoText(a);
   updateSide(); renderList(); draw(); };
@@ -1378,6 +1395,7 @@ $('btnAutoClearAll').onclick = () => { const n = S.plates.filter(hasAuto).length
   S.plates.forEach(p => { if (hasAuto(p) || p.data.auto) clearAuto(p); }); updateSide(); renderList(); draw(); };
 $('btnAutoAll').onclick = async () => {
   if (!S.plates.length) return;
+  if (!learnedReady()) return alert(notLearnedMsg());
   // 대상: 자동 점이 아직 없는 판. 직접 찍은 점이 있는 판은 비교용으로 개수 제한 없이 자동 계수
   const todo = S.plates.filter(p => !hasAuto(p) && !Object.keys(p.data.cells).length);
   const nMan = todo.filter(p => (p.data.marks || []).some(k => k.manual)).length;
@@ -1447,20 +1465,8 @@ async function cleanTrain(){
 }
 function saveTrain(){ return idbPut('meta', 'trainSet', S.train); }
 const trainId = p => p.group ? `g:${p.group}|${p.name}` : `${p.rk !== undefined ? p.rk : ($('round').value || '')}|${p.name}`;
-function paramText(P){ if (!P) return '기본값 (가장 넓게 셈)'; if (P.v >= 3 && P.model) return `학습 모델 (특징 ${P.model.w.length}개 · 콜로니 확률 ${Math.round(P.model.thr * 100)}% 이상만 셈)`; const bx = P.brightExtra ?? (P.noBright ? BRIGHT_OFF : 0);
+function paramText(P){ if (!P) return '학습 전 (자동 계수 안 함)'; if (P.v >= 3 && P.model) return `학습 모델 (특징 ${P.model.w.length}개 · 콜로니 확률 ${Math.round(P.model.thr * 100)}% 이상만 셈)`; const bx = P.brightExtra ?? (P.noBright ? BRIGHT_OFF : 0);
   return `최소 진하기 ${P.minPeak} · 최소 크기 ${P.minArea}px · 밝은 흰 점 ${bx >= BRIGHT_OFF ? '세지 않음' : bx ? `진하기 +${bx} 이상만` : '같은 기준'} · N.C 기준 ${P.useNC ? '사용' : '안 씀'}${P.allowReflect ? ' · 반사 판정 점도 셈' : ''}`; }
-// 판 하나를 학습 자료로 (자동 계수 후보 점은 가장 넓은 기준으로 찾아 둠)
-async function sampleFromPlate(p){
-  await ensureCircle(p); const nc = await ncPoints(); const r = findBlobsWith(p.img, p.data.circle, LEARN_SENS, LEARN_MINAREA);
-  const s = { v: 2, round: $('round').value || '', name: p.name, at: new Date().toISOString(),
-    man: p.data.marks.filter(k => k.manual && !k.imp).map(k => ({x: Math.round(k.x), y: Math.round(k.y)})),   // 다른 프로그램 표시(보라)는 학습에 안 씀
-    cands: r.blobs.map(b => ({ x: Math.round(b.x), y: Math.round(b.y), area: b.area, peak: +b.peak.toFixed(1), refl: isReflect(b) ? 1 : 0, bdom: brightDom(b) ? 1 : 0,
-      ncl: (nc && nc.some(q => q.peak >= b.peak && q.area >= b.area)) ? 1 : 0,
-      sat: +b.sat.toFixed(1), dark: +b.dark.toFixed(1), bright: +b.bright.toFixed(1) })) };
-  s.v = 3;
-  if (p !== cur()) p.img = null;
-  return s;
-}
 // ---------- 학습 모델 ----------
 // 직접 계수한 판마다 자동 계수 후보 점(옅고 작은 점까지 넓게)을 모아, 각 후보가 직접 점(주황)과 겹치면 「콜로니」, 아니면 「아님」으로 표시해
 // 후보의 특징(크기·진하기·색·어두움·밝음·반사·N.C 비슷함)으로 콜로니일 확률을 계산하는 모델(로지스틱 회귀)을 맞춤.
@@ -1481,7 +1487,7 @@ function prepSample(s, basic){
   pairs.sort((a, b) => a[0] - b[0]);
   const y = new Uint8Array(s.cands.length), ui = new Set();
   for (const [, i, j] of pairs){ if (ui.has(i) || y[j]) continue; ui.add(i); y[j] = 1; }
-  return { s, pairs, y, X: s.cands.map(c => featOf(c, undefined, basic)) };
+  return { s, pairs, y, X: s.cands.map(c => c.f || featOf(c, undefined, basic)) };
 }
 // 거를 기준(keep)으로 판들을 셌을 때: 찾은 직접 점 M, 직접 점 Nm, 찍은 점 Na
 function evalKeep(preps, keepOf){ let M = 0, Nm = 0, Na = 0;
@@ -1492,7 +1498,7 @@ function evalKeep(preps, keepOf){ let M = 0, Nm = 0, Na = 0;
   return { M, Nm, Na, recall: Nm ? M / Nm : 0, fp: Na - M, fpPer: preps.length ? (Na - M) / preps.length : 0, f1: (Nm + Na) ? 2 * M / (Nm + Na) : 0 }; }
 function trainModel(preps, basic){
   const X = [], Y = []; for (const p of preps){ X.push(...p.X); Y.push(...p.y); }
-  const d = basic ? 5 : 8, nPos = Y.reduce((a, b) => a + b, 0); if (!X.length || !nPos) return null;
+  const d = X.length ? X[0].length : 0, nPos = Y.reduce((a, b) => a + b, 0); if (!X.length || !nPos) return null;
   const mean = Array(d).fill(0), std = Array(d).fill(0);
   for (const x of X) for (let k = 0; k < d; k++) mean[k] += x[k] / X.length;
   for (const x of X) for (let k = 0; k < d; k++) std[k] += (x[k] - mean[k]) ** 2 / X.length;
@@ -1516,10 +1522,10 @@ function trainModel(preps, basic){
 const keepByModel = m => p => p.X.map(x => lrProb(m, x) >= m.thr);
 // 쌓인 학습 자료 전체로 모델 다시 맞추기 + 학습 전/학습 후/새 판 예측(검증) 성적
 function fitParams(){
-  const samples = Object.values(S.train.samples).filter(s => s.man.length); if (!samples.length) return null;
+  const samples = Object.values(S.train.samples).filter(s => s.man.length && s.v >= 4); if (!samples.length) return null;   /* v4(모든 후보+특징) 자료만 */
   const basic = samples.some(s => s.cands.some(c => c.sat === undefined));   // 예전 학습 자료가 섞이면 공통 특징만
   const preps = samples.map(s => prepSample(s, basic));
-  const base = evalKeep(preps, p => p.s.cands.map(c => !c.refl && c.peak >= 8 && c.area >= 8 && !c.ncl));   // 학습 전 기본 자동 계수와 같은 조건
+  const base = evalKeep(preps, p => p.s.cands.map(() => false));   /* 학습 전에는 자동 계수를 하지 않음 */
   const m = trainModel(preps, basic); if (!m) return null;
   const fit = evalKeep(preps, keepByModel(m));
   // 검증: 판 하나씩(판이 많으면 5묶음) 빼고 학습 → 뺀 판 예측
@@ -1534,7 +1540,7 @@ async function relearn(reason){
   const r = fitParams(); if (!r) return null;
   const prev = S.autoParams;
   // 새 판 예측(검증)이 학습 전 기본보다 좋을 때만 자동 계수에 씀 (F1: 찾은 것과 헛점을 함께 따진 점수)
-  const cvF1 = r.cv ? 2 * r.cv.M / (r.cv.Nm + r.cv.Na || 1) : 0, active = !!r.cv && cvF1 >= r.base.f1 - 0.005 && cvF1 >= MODEL_MIN_F1;
+  const cvF1 = r.cv ? 2 * r.cv.M / (r.cv.Nm + r.cv.Na || 1) : 0, active = !!r.cv && cvF1 >= MODEL_MIN_F1;
   S.autoParams = { v: 3, model: r.m, active, cvF1, baseF1: r.base.f1, score: r.fit.recall, recall: r.fit.recall, fpPer: r.fit.fpPer, M: r.fit.M, Na: r.fit.Na, trainPlates: r.n, trainMan: r.fit.Nm,
     base: {recall: r.base.recall, fpPer: r.base.fpPer}, cv: r.cv && {recall: r.cv.recall, fpPer: r.cv.fpPer}, baseScore: r.base.recall, at: new Date().toISOString() };
   try { localStorage.setItem(LS_KEY + 'autoParams', JSON.stringify(S.autoParams)); } catch(e){}
@@ -1565,7 +1571,7 @@ function showCal(){
         <tr><td>학습 전 기본</td><td>${pc(P.base && P.base.recall)}</td><td>${fp(P.base && P.base.fpPer)}</td></tr>
         <tr><td>학습 후 (학습한 판)</td><td>${pc(P.recall)}</td><td>${fp(P.fpPer)}</td></tr>
         <tr class="tot"><td>새 판 예측 (검증)</td><td>${P.cv ? pc(P.cv.recall) : '–'}</td><td>${P.cv ? fp(P.cv.fpPer) : '–'}</td></tr></table>
-        <div style="margin:4px 0;color:${activeParams() ? 'var(--ok)' : 'var(--warn)'}">${activeParams() ? '✔ 새 판 예측이 기본보다 좋아, 지금 자동 계수에 이 학습 모델을 씁니다.' : '아직 기본 기준으로 셉니다 — 새 판 예측이 충분히 좋아질 때까지(놓친 것·헛점을 함께 따진 점수 0.5 이상) 직접 계수한 판을 더 학습시키세요.'}</div>
+        <div style="margin:4px 0;color:${activeParams() ? 'var(--ok)' : 'var(--warn)'}">${activeParams() ? '✔ 새 판 예측 점수가 기준(50점) 이상이라 지금 이 학습 모델로 자동 계수합니다.' : '아직 자동 계수를 하지 않습니다 — 새 판 예측 점수(놓친 것·헛점을 함께 따진 점수)가 50점 이상이 될 때까지 직접 찍은 판을 더 학습시키세요.'}</div>
         <div class="muted">찾은 비율 = 직접 점 중 자동 계수도 찾은 비율, 헛점 = 직접 점이 없는 곳에 찍은 점(판당). 「새 판 예측」은 판 하나씩 빼고 학습해 그 판을 맞혀 본 결과로, 학습 전보다 좋아야 학습이 효과 있는 것입니다${P.cv ? '' : ' (2판 이상 학습하면 나옴)'}.</div>`
       : P ? '<div style="color:var(--warn)">예전 방식(찾은 비율만 보고 헛점은 안 따짐)으로 맞춘 기준이라 지금은 쓰지 않고 기본 기준으로 셉니다. 「완료 판 전부 학습」을 한 번 누르면 헛점까지 따지는 새 방식으로 다시 학습합니다.</div>' : '');
   const log = S.train.log.slice(-6).reverse();
