@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610131517';   /*APPVER*/
+  var MY = '202610131518';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -17,7 +17,7 @@
 </script>
 <title>Colony Counter</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CclipPath id='m'%3E%3Ccircle cx='29' cy='29' r='21'/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle cx='29' cy='29' r='27' fill='%23d6e8f2' stroke='%233f6f8a' stroke-width='3.5'/%3E%3Ccircle cx='29' cy='29' r='21' fill='%23fffdf6'/%3E%3Cg clip-path='url(%23m)' stroke='%238dbad1' stroke-width='1.6'%3E%3Cpath d='M19 4v50M29 4v50M39 4v50M4 19h50M4 29h50M4 39h50'/%3E%3C/g%3E%3Cg stroke='%237a4d12' stroke-width='1'%3E%3Ccircle cx='23' cy='22' r='4.6' fill='%23f2b84b'/%3E%3Ccircle cx='36' cy='33' r='5.2' fill='%23e9a23b'/%3E%3Ccircle cx='21' cy='37' r='3.6' fill='%23e07a5f'/%3E%3C/g%3E%3Ccircle cx='36' cy='33' r='8.4' fill='none' stroke='%238e5cd9' stroke-width='2.4'/%3E%3Ccircle cx='50' cy='50' r='12.5' fill='%232b6cb0' stroke='%23fff' stroke-width='2.5'/%3E%3Cpath d='M44.5 50.5l4 4 7.5-8.5' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-<meta name="version" content="202610131517">
+<meta name="version" content="202610131518">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -121,7 +121,7 @@ input[type=checkbox]{accent-color:var(--accent)}
 #side h2{font:800 14.5px var(--serif);letter-spacing:.01em;color:var(--accent);margin:18px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--rule)}
 #side h2:first-child{margin-top:2px}
 .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0}
-.autoBtns{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 0}
+.autoBtns{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:6px 0}
 .autoBtns button{width:100%;min-height:34px;padding:5px 4px;white-space:normal;word-break:keep-all;line-height:1.25}
 .autoBtns .wide{grid-column:1/-1}
 .big{font:800 40px/1.1 var(--serif);color:#fff}
@@ -221,8 +221,8 @@ body.resizing{cursor:col-resize;user-select:none}
     <div id="learnLog"></div>
     <div class="row"><button id="btnParamsOut" title="맞춘 기준을 파일로 (다른 사람과 나누기)">학습 기준 내보내기</button><label class="btn" title="다른 사람이 맞춘 기준 가져오기">가져오기<input id="paramsIn" type="file" accept=".json" hidden></label></div>
   </div>
- <div class="autoBtns"><button id="btnAutoAll" class="primary" title="자동 점이 없는 모든 판을 자동 계수">전체 판 계수</button><button id="btnAutoOne" title="지금 판을 자동 계수 (자동 점이 있으면 지움)">이 판 계수</button><button id="btnAdmin" title="비밀번호를 넣으면 자동 계수 버튼이 관리자 기준으로 셈">🔒 관리자</button>
-    <button id="btnAutoClearAll" class="wide" title="모든 판의 자동 계수 점(하늘색)만 지움. 직접 찍은 점(주황)은 남음">전체 판 자동 점 지우기</button></div>
+ <div class="autoBtns"><button id="btnAutoAll" class="primary" title="자동 점이 없는 모든 판을 자동 계수">전체 판 자동 계수</button><button id="btnAutoOne" title="지금 판을 자동 계수 (자동 점이 있으면 지움)">이 판 자동 계수</button>
+    <button id="btnAutoClearAll" title="모든 판의 자동 계수 점(하늘색)만 지움. 직접 찍은 점(주황)은 남음">전체 판 자동 점 지우기</button><button id="btnAdmin" title="비밀번호를 넣으면 자동 계수 버튼이 관리자 기준으로 셈">🔒 관리자 계수</button></div>
   <div class="muted">하늘색 고리 = 자동 계수 점, 주황 고리 = 직접 클릭한 점. 점 위를 <b>한 번 클릭</b>하면 자동 점·직접 점 모두 지워집니다. 전부 지우려면 「자동 계수 지우기」.</div>
   <div class="muted" id="autoInfo">같은 회차 N.C 판에 있는 점 수준은 빼고(NC0 기준) 셉니다.</div>
   <div class="row"><label><input type="checkbox" id="showMarks" checked> 콜로니 점·원 표시</label></div>
@@ -1552,7 +1552,7 @@ function admApply(p, pts, manual, now){
   return out;
 }
 function adminText(a){ return `관리자 자동 계수: 콜로니 ${a.nc0}개 (흰 점 ${a.white}·회색 ${a.grey} 포함${a.merged ? `, 붙은 점 ${a.merged}개 합침` : ''}${a.gridPrint ? `, 격자 인쇄 점 ${a.gridPrint}개 뺌` : ''}${a.onLine ? `, 한 줄 점 ${a.onLine}개 뺌` : ''}${a.learnDel ? `, 학습으로 ${a.learnDel}개 뺌` : ''}${a.learnAdd ? `, 학습으로 ${a.learnAdd}개 더함` : ''})`; }
-function adminShow(){ const b = $('btnAdmin'); b.textContent = adminOn ? '🔓 관리자 켜짐' : '🔒 관리자'; b.classList.toggle('on', adminOn);
+function adminShow(){ const b = $('btnAdmin'); b.textContent = adminOn ? '🔓 관리자 계수 켜짐' : '🔒 관리자 계수'; b.classList.toggle('on', adminOn);
   b.title = adminOn ? '지금 「전체 판 자동 계수」「이 판 자동 계수」는 관리자 기준으로 셉니다. 누르면 끔 · ' + admStatus() : '비밀번호를 넣으면 자동 계수 버튼이 관리자 기준으로 셈'; }
 async function adminAll(){
   const todo = S.plates.filter(p => !hasAuto(p) && !Object.keys(p.data.cells).length);
@@ -1847,7 +1847,7 @@ function updateSide(){
   if (!/세는 중/.test($('impInfo').textContent)) $('impInfo').textContent = impText(p);
   $('btnNoGrid').textContent = p.data.noGrid ? '이 판 격자·원 다시 표시' : '이 판 격자·원 없애기';
   $('btnNoGridTool').textContent = p.data.noGrid ? '격자·원 다시 표시' : '격자·원 없애기'; $('btnNoGridTool').classList.toggle('on', !!p.data.noGrid);
-  $('btnAutoOne').textContent = hasAuto(p) ? '이 판 점 지우기' : '이 판 계수';
+  $('btnAutoOne').textContent = hasAuto(p) ? '이 판 자동 점 지우기' : '이 판 자동 계수';
   $('btnAutoOne').classList.toggle('on', hasAuto(p));
   if (p.data.grid){ $('gAng').value = (p.data.grid.a*180/Math.PI).toFixed(1); $('gSize').value = p.data.grid.size.toFixed(1); }
 }
