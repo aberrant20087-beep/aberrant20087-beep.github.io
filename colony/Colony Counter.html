@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610131518';   /*APPVER*/
+  var MY = '202610131531';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -17,7 +17,7 @@
 </script>
 <title>Colony Counter</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CclipPath id='m'%3E%3Ccircle cx='29' cy='29' r='21'/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle cx='29' cy='29' r='27' fill='%23d6e8f2' stroke='%233f6f8a' stroke-width='3.5'/%3E%3Ccircle cx='29' cy='29' r='21' fill='%23fffdf6'/%3E%3Cg clip-path='url(%23m)' stroke='%238dbad1' stroke-width='1.6'%3E%3Cpath d='M19 4v50M29 4v50M39 4v50M4 19h50M4 29h50M4 39h50'/%3E%3C/g%3E%3Cg stroke='%237a4d12' stroke-width='1'%3E%3Ccircle cx='23' cy='22' r='4.6' fill='%23f2b84b'/%3E%3Ccircle cx='36' cy='33' r='5.2' fill='%23e9a23b'/%3E%3Ccircle cx='21' cy='37' r='3.6' fill='%23e07a5f'/%3E%3C/g%3E%3Ccircle cx='36' cy='33' r='8.4' fill='none' stroke='%238e5cd9' stroke-width='2.4'/%3E%3Ccircle cx='50' cy='50' r='12.5' fill='%232b6cb0' stroke='%23fff' stroke-width='2.5'/%3E%3Cpath d='M44.5 50.5l4 4 7.5-8.5' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-<meta name="version" content="202610131518">
+<meta name="version" content="202610131531">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -214,7 +214,7 @@ body.resizing{cursor:col-resize;user-select:none}
   <div class="ncbox">
     <div class="row"><b>자동 계수 학습 (정확도 올리기)</b></div>
     <div class="muted">직접 계수를 끝낸 판을 학습시키면, 쌓인 판 전체로 자동 계수 기준을 다시 맞춥니다. 판을 셀수록 점점 정확해집니다.</div>
-    <div class="row"><button id="btnLearn" class="primary" title="지금 판의 직접 계수(주황)를 정답으로 학습">이 판으로 학습</button><button id="btnLearnAll" title="✔ 완료한 판 전부 학습">완료 판 전부 학습</button></div>
+    <div class="autoBtns" style="grid-template-columns:repeat(3,1fr)"><button id="btnLearn" class="primary" title="지금 판의 직접 계수(주황)를 정답으로 학습">이 판으로 학습</button><button id="btnLearnAll" title="✔ 완료한 판 전부 학습">완료 판 전부 학습</button><button id="btnLearnReset" title="쌓인 학습 자료와 학습 기준을 지우고 처음 상태로 (관리자 계수가 켜져 있으면 관리자 학습을 초기화)">학습 초기화</button></div>
     <div class="row"><label><input type="checkbox" id="autoLearn" checked> ✔ 완료 표시하면 자동으로 학습</label></div>
     <div id="learnState" class="muted"></div>
     <div id="calInfo" class="muted"></div>
@@ -1754,7 +1754,21 @@ $('btnLearnAll').onclick = async () => {
   const r = await relearn(`완료 판 ${list.length}개 일괄`);
   $('learnState').textContent = r ? `학습 완료 → 점수 ${scoreOf(r.now)}점 (${Object.keys(S.train.samples).length}판)` : ''; renderList();
 };
-// 학습 결과(맞춘 기준) 나누기: 다른 사람에게 주면 같은 기준으로 자동 계수
+// 학습 초기화: 관리자 계수가 꺼져 있으면 사용자 학습(직접 찍은 점으로 배운 자동 계수 기준), 켜져 있으면 관리자 학습(지운 점으로 배운 빼기 규칙)을 지움
+// 찍어 둔 점·계수 결과·사진은 그대로 둠
+$('btnLearnReset').onclick = async () => {
+  if (adminOn){
+    const n = Object.keys(S.train.adm || {}).length;
+    if (!confirm(`관리자 학습을 초기화할까요?\n\n관리자 학습 자료 ${n}판과 「지운 점」으로 배운 빼기 규칙을 지웁니다. 관리자 계수는 처음 기준으로 돌아갑니다.\n찍어 둔 점·계수 결과는 그대로 남습니다.`)) return;
+    S.train.adm = {}; S.admM = null; try { localStorage.removeItem(LS_KEY + 'adminModel'); } catch (e) {}
+    S.plates.forEach(p => { if (p.data.adminRun && p.data.learnedAt){ delete p.data.learnedAt; save(p); } });
+    await saveTrain(); $('learnState').textContent = '관리자 학습을 초기화했습니다.'; adminShow(); renderList(); updateSide(); return;
+  }
+  const n = Object.keys(S.train.samples).length;
+  if (!confirm(`자동 계수 학습을 초기화할까요?\n\n학습 자료 ${n}판과 학습 기준을 모두 지웁니다. 다시 2판 이상 학습할 때까지 자동 계수는 점을 찍지 않습니다.\n찍어 둔 점·계수 결과는 그대로 남습니다.\n(관리자 학습은 관리자 계수를 켠 상태에서 따로 초기화합니다.)`)) return;
+  S.train.samples = {}; S.train.log = []; S.autoParams = null; try { localStorage.removeItem(LS_KEY + 'autoParams'); } catch (e) {}
+  S.plates.forEach(p => { if (!p.data.adminRun && p.data.learnedAt){ delete p.data.learnedAt; save(p); } });
+  await saveTrain(); S.ncPts = null; $('learnState').textContent = '자동 계수 학습을 초기화했습니다.'; showCal(); renderList(); updateSide(); };// 학습 결과(맞춘 기준) 나누기: 다른 사람에게 주면 같은 기준으로 자동 계수
 $('btnParamsOut').onclick = () => { if (!S.autoParams) return alert('아직 맞춘 기준이 없습니다.');
   const o = { app: 'Colony Counter', by: 'SEOL(신승근)', params: S.autoParams, log: S.train.log.slice(-20) };
   const b = new Blob([JSON.stringify(o, null, 1)], {type: 'application/json'}); downloadBlob(b, `Colony Counter_학습기준_${new Date().toISOString().slice(0,10)}.json`); };
