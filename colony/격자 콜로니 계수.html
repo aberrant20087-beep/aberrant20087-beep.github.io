@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610130941';   /*APPVER*/
+  var MY = '202610131433';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -17,7 +17,7 @@
 </script>
 <title>Colony Counter</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CclipPath id='m'%3E%3Ccircle cx='29' cy='29' r='21'/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle cx='29' cy='29' r='27' fill='%23d6e8f2' stroke='%233f6f8a' stroke-width='3.5'/%3E%3Ccircle cx='29' cy='29' r='21' fill='%23fffdf6'/%3E%3Cg clip-path='url(%23m)' stroke='%238dbad1' stroke-width='1.6'%3E%3Cpath d='M19 4v50M29 4v50M39 4v50M4 19h50M4 29h50M4 39h50'/%3E%3C/g%3E%3Cg stroke='%237a4d12' stroke-width='1'%3E%3Ccircle cx='23' cy='22' r='4.6' fill='%23f2b84b'/%3E%3Ccircle cx='36' cy='33' r='5.2' fill='%23e9a23b'/%3E%3Ccircle cx='21' cy='37' r='3.6' fill='%23e07a5f'/%3E%3C/g%3E%3Ccircle cx='36' cy='33' r='8.4' fill='none' stroke='%238e5cd9' stroke-width='2.4'/%3E%3Ccircle cx='50' cy='50' r='12.5' fill='%232b6cb0' stroke='%23fff' stroke-width='2.5'/%3E%3Cpath d='M44.5 50.5l4 4 7.5-8.5' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-<meta name="version" content="202610130941">
+<meta name="version" content="202610131433">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -219,6 +219,11 @@ body.resizing{cursor:col-resize;user-select:none}
     <div class="row"><button id="btnParamsOut" title="맞춘 기준을 파일로 (다른 사람과 나누기)">학습 기준 내보내기</button><label class="btn" title="다른 사람이 맞춘 기준 가져오기">가져오기<input id="paramsIn" type="file" accept=".json" hidden></label></div>
   </div>
  <div class="row"><button id="btnAutoAll" class="primary">전체 판 자동 계수</button><button id="btnAutoOne">이 판 자동 계수</button></div>
+  <div class="row"><button id="btnAdmin" title="비밀번호를 넣으면 관리자 기준 자동 계수를 쓸 수 있음">🔒 관리자 구역</button></div>
+  <div id="adminBox" hidden style="border:1px dashed #c58b00;border-radius:6px;padding:6px;margin:4px 0">
+    <div class="muted"><b>관리자 기준 자동 계수</b> (학습 없이 바로): 색 콜로니 + 하얗게 비친 점 + 회색기 도는 옅은 콜로니를 세고, 인쇄 격자 점·한 줄로 늘어선 점·막 밖은 빼며, 서로 붙거나 겹친 점은 하나로 셉니다.</div>
+    <div class="row"><button id="btnAdminAll" class="primary">관리자: 전체 판 자동 계수</button><button id="btnAdminOne">관리자: 이 판 자동 계수</button></div>
+  </div>
   <div class="row"><button id="btnAutoClearAll" title="모든 판의 자동 계수 점(하늘색)만 지움">전체 판 자동 계수 지우기</button></div>
   <div class="muted">하늘색 고리 = 자동 계수 점, 주황 고리 = 직접 클릭한 점. 점 위를 <b>한 번 클릭</b>하면 자동 점·직접 점 모두 지워집니다. 전부 지우려면 「자동 계수 지우기」.</div>
   <div class="muted" id="autoInfo">같은 회차 N.C 판에 있는 점 수준은 빼고(NC0 기준) 셉니다.</div>
@@ -1408,6 +1413,68 @@ $('btnAutoAll').onclick = async () => {
     renderList(); }
   $('autoInfo').textContent = `자동 계수 끝: ${applied}개 판 채움. 원을 확인하고 틀린 것은 「표시 편집」으로 고치세요.`;
   updateSide(); draw(); };
+// ---------- 관리자 구역 (2026-10-13): 비밀번호를 넣으면 학습 없이 「관리자 기준」으로 자동 계수 ----------
+// 관리자 기준 = 색 콜로니 + 하얗게 비친 점 + 회색기 도는 옅은 콜로니 − 인쇄 격자점·한 줄로 늘어선 점·막 밖, 서로 붙거나 겹친 점은 하나로 셈
+// (비밀번호는 화면 잠금용일 뿐 보안 장치는 아님)
+const ADMIN_KEY = 4025704166, ADMIN_MERGE = 24 / 724;   // 붙은 점 기준: 막 반지름의 24/724 (원본 사진 막 반지름 724px에서 24px)
+const adminHash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619) >>> 0; return h; };
+let adminOn = false; try { adminOn = sessionStorage.getItem('gridcount:admin') === '1'; } catch (e) {}
+// 붙거나 겹친 자동 점을 하나로 (묶음의 가운데에 한 점)
+function mergeTouching(pts, gap){
+  const n = pts.length, par = pts.map((_, i) => i), f = i => { while (par[i] !== i) i = par[i] = par[par[i]]; return i; };
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) if (Math.hypot(pts[i].x - pts[j].x, pts[i].y - pts[j].y) < gap){ const a = f(i), b = f(j); if (a !== b) par[b] = a; }
+  const g = new Map(); pts.forEach((q, i) => { const r = f(i); if (!g.has(r)) g.set(r, []); g.get(r).push(q); });
+  return [...g.values()].map(arr => arr.length === 1 ? arr[0] : Object.assign({}, arr[0], { x: Math.round(arr.reduce((s, q) => s + q.x, 0) / arr.length), y: Math.round(arr.reduce((s, q) => s + q.y, 0) / arr.length), r: Math.max(...arr.map(q => q.r)) }));
+}
+async function adminCount(p){
+  await ensureCircle(p); await yieldUI();
+  const nc = await ncPoints(), r = findBlobs(p.img, p.data.circle);
+  let col = []; const ncl = []; let refl = 0, filt = 0, mk = 0, gp = 0, faint = 0, dup = 0;
+  if (!p.data.grid && !p.data.noGrid) autoGrid(p);
+  const imps = (p.data.marks || []).filter(k => k.imp);
+  const onImp = b => imps.some(k => Math.hypot(k.x - b.x, k.y - b.y) <= HALF_OVERLAP * Math.max(Math.sqrt(b.area / Math.PI) + 12, MATCH_MIN_R));
+  for (const b of r.blobs){ const c = classify(b, nc, null); if (c === 'reflect') refl++; else if (c === 'nclike') ncl.push(b); else if (c === 'filtered') filt++; else if (c === 'faint') faint++; else if (c === 'marker') mk++; else if (isGridPrint(p, b) || isGreyPrint(b)) gp++; else if (onImp(b)) dup++; else col.push(b); }
+  if (p.label === 'N.C') col.length = 0;
+  const a = {nc0: 0, nclike: ncl.length, reflect: refl, filtered: filt, faint, dup, marker: mk, gridPrint: gp, tuned: false, admin: true, excluded: +r.excluded.toFixed(3), nc: !!nc, at: new Date().toISOString(), applied: true};
+  const manual = (p.data.marks || []).filter(k => k.manual), now = Date.now();
+  let white = [], grey = [];
+  if (p.label !== 'N.C'){ const gap = 10 * Math.max(1, p.data.circle.r / 610), taken = col.map(b => [b.x, b.y]).concat(manual.map(k => [k.x, k.y]), imps.map(k => [k.x, k.y]));
+    white = findWhiteSpots(p).filter(w => !taken.some(([x, y]) => Math.hypot(x - w.x, y - w.y) < gap)); }
+  if (p.label !== 'N.C'){ const gap = 14 * Math.max(1, p.data.circle.r / 610), taken = col.map(b => [b.x, b.y]).concat(manual.map(k => [k.x, k.y]), imps.map(k => [k.x, k.y]), white.map(w => [w.x, w.y]));
+    grey = findGreySpots(p).filter(w => !taken.some(([x, y]) => Math.hypot(x - w.x, y - w.y) < gap)); }
+  { const all = col.map(b => ({x: b.x, y: b.y, o: b})).concat(white.map(w => ({x: w.x, y: w.y, o: w})), grey.map(w => ({x: w.x, y: w.y, o: w})));
+    const drop = new Set([...onLinePoints(all, p.data.circle.r)].map(i => all[i].o));
+    col = col.filter(b => !drop.has(b) || b.sat >= 40); white = white.filter(w => !drop.has(w)); grey = grey.filter(w => !drop.has(w)); a.onLine = drop.size; }
+  let pts = col.map(b => ({x: Math.round(b.x), y: Math.round(b.y), r: Math.round(Math.sqrt(b.area / Math.PI) + 12), t: now}))
+    .concat(white.map(w => ({x: Math.round(w.x), y: Math.round(w.y), r: Math.round(Math.sqrt(w.a / Math.PI) + 12), t: now, w: 1})),
+            grey.map(w => ({x: Math.round(w.x), y: Math.round(w.y), r: Math.round(Math.sqrt(w.a / Math.PI) + 12), t: now, g: 1})));
+  const before = pts.length; pts = mergeTouching(pts, ADMIN_MERGE * p.data.circle.r);
+  a.white = pts.filter(q => q.w).length; a.grey = pts.filter(q => q.g).length; a.merged = before - pts.length; a.nc0 = pts.length;
+  p.data.marks = manual.concat(pts); p.data.auto = a;
+  if (!p.data.grid) autoGrid(p);
+  save(p); return a;
+}
+function adminText(a){ return `관리자 자동 계수: 콜로니 ${a.nc0}개 (흰 점 ${a.white}·회색 ${a.grey} 포함${a.merged ? `, 붙은 점 ${a.merged}개 합침` : ''}${a.gridPrint ? `, 격자 인쇄 점 ${a.gridPrint}개 뺌` : ''}${a.onLine ? `, 한 줄 점 ${a.onLine}개 뺌` : ''})`; }
+function adminShow(){ $('adminBox').hidden = !adminOn; $('btnAdmin').textContent = adminOn ? '🔓 관리자 구역 잠그기' : '🔒 관리자 구역'; }
+$('btnAdmin').onclick = () => {
+  if (adminOn){ adminOn = false; try { sessionStorage.removeItem('gridcount:admin'); } catch (e) {} adminShow(); return; }
+  const s = prompt('관리자 비밀번호를 입력하세요'); if (s == null) return;
+  if (adminHash(s.trim()) !== ADMIN_KEY) return alert('비밀번호가 맞지 않습니다.');
+  adminOn = true; try { sessionStorage.setItem('gridcount:admin', '1'); } catch (e) {} adminShow(); };
+$('btnAdminOne').onclick = async () => { const p = cur(); if (!p || !adminOn) return;
+  if (hasAuto(p) && !confirm('이 판의 자동 점(하늘색)을 지우고 관리자 기준으로 다시 셀까요? 직접 찍은 점(주황)은 남습니다.')) return;
+  if (hasAuto(p)) clearAuto(p);
+  $('autoInfo').textContent = '관리자 기준으로 계수 중…'; await yieldUI();
+  const a = await adminCount(p); $('autoInfo').textContent = adminText(a); updateSide(); renderList(); draw(); };
+$('btnAdminAll').onclick = async () => { if (!S.plates.length || !adminOn) return;
+  const todo = S.plates.filter(p => !hasAuto(p) && !Object.keys(p.data.cells).length);
+  if (!todo.length) return alert('자동 점이 없는 판이 없습니다. 다시 세려면 「전체 판 자동 계수 지우기」를 먼저 누르세요.');
+  if (!confirm(`관리자 기준으로 판 ${todo.length}개를 자동 계수할까요?`)) return;
+  let k = 0;
+  for (const p of todo){ k++; $('autoInfo').textContent = `관리자 계수 중 ${k}/${todo.length} — ${p.name}`; await yieldUI();
+    await adminCount(p); if (p !== cur()) p.img = null; renderList(); }
+  $('autoInfo').textContent = `관리자 자동 계수 끝: ${todo.length}개 판.`; updateSide(); draw(); };
+adminShow();
 // ---------- 자동 계수 학습: 직접 계수한 판을 모아 자동 계수 기준을 계속 다시 맞춤 ----------
 // 학습 자료(판별: 자동 계수 후보 점 특징 + 직접 찍은 점)는 브라우저(IndexedDB)에 쌓이고,
 // 학습에는 직접 찍은 점(주황)만 씀 (자동 점은 쓰지 않음). 자동 계수가 놓친 직접 점까지 잡히도록, 후보는 평소보다 옅고 작은 점·반사 판정 점까지 넓게 모아 두고
@@ -1599,7 +1666,7 @@ $('paramsIn').onchange = async e => { const f = e.target.files[0]; e.target.valu
     S.autoParams = { ...o.params, imported: f.name }; localStorage.setItem(LS_KEY + 'autoParams', JSON.stringify(S.autoParams)); S.ncPts = null; loadTrain();
   } catch(err){ alert('학습 기준 파일이 아닙니다.'); } };
 
-function autoText(a){ if (!a) return ''; if (a.skipped === 'imp') return '이 판은 다른 프로그램 표시(보라)로 센 판이라 자동 계수를 하지 않습니다. 보라 점 개수가 계수 결과입니다.'; if (a.view != null) return `자동 계수${a.tuned ? '(맞춘 기준)' : ''}: 이 판 자동 점 ${a.nc0}개`; return `자동 계수${a.tuned ? '(맞춘 기준)' : ''}: 콜로니 ${a.nc0}개 (NC 유사 점 ${a.nclike}개·반사 ${a.reflect}개${a.filtered ? `·${a.nc || a.tuned ? '기준 미달' : '옅고 작은 잡티'} ${a.filtered}개` : ''} 제외${a.nc ? '' : ', N.C 없음 → 진하기 18·크기 60px 이상만 셈. N.C 사진을 넣으면 더 정확'})${a.marker ? ` · 다른 프로그램 표시로 보이는 점 ${a.marker}개는 뺌 → 「표시 점 자동 세기」를 쓰세요` : ''}${a.gridPrint ? ` · 격자선 인쇄 점선 ${a.gridPrint}개 뺌` : ''}${a.faint ? ` · 흐릿한 점 ${a.faint}개 안 셈` : ''}${a.dup ? ` · 이미 센 보라 점과 겹친 ${a.dup}개는 그대로` : ''}${a.excluded > 0.15 ? ` · 펜/라벨로 막의 ${(a.excluded*100).toFixed(0)}% 제외됨 — 확인 필요` : ''}`; }
+function autoText(a){ if (!a) return ''; if (a.admin) return adminText(a); if (a.skipped === 'imp') return '이 판은 다른 프로그램 표시(보라)로 센 판이라 자동 계수를 하지 않습니다. 보라 점 개수가 계수 결과입니다.'; if (a.view != null) return `자동 계수${a.tuned ? '(맞춘 기준)' : ''}: 이 판 자동 점 ${a.nc0}개`; return `자동 계수${a.tuned ? '(맞춘 기준)' : ''}: 콜로니 ${a.nc0}개 (NC 유사 점 ${a.nclike}개·반사 ${a.reflect}개${a.filtered ? `·${a.nc || a.tuned ? '기준 미달' : '옅고 작은 잡티'} ${a.filtered}개` : ''} 제외${a.nc ? '' : ', N.C 없음 → 진하기 18·크기 60px 이상만 셈. N.C 사진을 넣으면 더 정확'})${a.marker ? ` · 다른 프로그램 표시로 보이는 점 ${a.marker}개는 뺌 → 「표시 점 자동 세기」를 쓰세요` : ''}${a.gridPrint ? ` · 격자선 인쇄 점선 ${a.gridPrint}개 뺌` : ''}${a.faint ? ` · 흐릿한 점 ${a.faint}개 안 셈` : ''}${a.dup ? ` · 이미 센 보라 점과 겹친 ${a.dup}개는 그대로` : ''}${a.excluded > 0.15 ? ` · 펜/라벨로 막의 ${(a.excluded*100).toFixed(0)}% 제외됨 — 확인 필요` : ''}`; }
 
 // ---------- 목록 / 사이드 ----------
 function renderList(){
