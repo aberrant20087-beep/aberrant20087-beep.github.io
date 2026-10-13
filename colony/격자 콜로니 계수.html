@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610131433';   /*APPVER*/
+  var MY = '202610131500';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -17,7 +17,7 @@
 </script>
 <title>Colony Counter</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CclipPath id='m'%3E%3Ccircle cx='29' cy='29' r='21'/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle cx='29' cy='29' r='27' fill='%23d6e8f2' stroke='%233f6f8a' stroke-width='3.5'/%3E%3Ccircle cx='29' cy='29' r='21' fill='%23fffdf6'/%3E%3Cg clip-path='url(%23m)' stroke='%238dbad1' stroke-width='1.6'%3E%3Cpath d='M19 4v50M29 4v50M39 4v50M4 19h50M4 29h50M4 39h50'/%3E%3C/g%3E%3Cg stroke='%237a4d12' stroke-width='1'%3E%3Ccircle cx='23' cy='22' r='4.6' fill='%23f2b84b'/%3E%3Ccircle cx='36' cy='33' r='5.2' fill='%23e9a23b'/%3E%3Ccircle cx='21' cy='37' r='3.6' fill='%23e07a5f'/%3E%3C/g%3E%3Ccircle cx='36' cy='33' r='8.4' fill='none' stroke='%238e5cd9' stroke-width='2.4'/%3E%3Ccircle cx='50' cy='50' r='12.5' fill='%232b6cb0' stroke='%23fff' stroke-width='2.5'/%3E%3Cpath d='M44.5 50.5l4 4 7.5-8.5' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-<meta name="version" content="202610131433">
+<meta name="version" content="202610131500">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -218,12 +218,7 @@ body.resizing{cursor:col-resize;user-select:none}
     <div id="learnLog"></div>
     <div class="row"><button id="btnParamsOut" title="맞춘 기준을 파일로 (다른 사람과 나누기)">학습 기준 내보내기</button><label class="btn" title="다른 사람이 맞춘 기준 가져오기">가져오기<input id="paramsIn" type="file" accept=".json" hidden></label></div>
   </div>
- <div class="row"><button id="btnAutoAll" class="primary">전체 판 자동 계수</button><button id="btnAutoOne">이 판 자동 계수</button></div>
-  <div class="row"><button id="btnAdmin" title="비밀번호를 넣으면 관리자 기준 자동 계수를 쓸 수 있음">🔒 관리자 구역</button></div>
-  <div id="adminBox" hidden style="border:1px dashed #c58b00;border-radius:6px;padding:6px;margin:4px 0">
-    <div class="muted"><b>관리자 기준 자동 계수</b> (학습 없이 바로): 색 콜로니 + 하얗게 비친 점 + 회색기 도는 옅은 콜로니를 세고, 인쇄 격자 점·한 줄로 늘어선 점·막 밖은 빼며, 서로 붙거나 겹친 점은 하나로 셉니다.</div>
-    <div class="row"><button id="btnAdminAll" class="primary">관리자: 전체 판 자동 계수</button><button id="btnAdminOne">관리자: 이 판 자동 계수</button></div>
-  </div>
+ <div class="row"><button id="btnAutoAll" class="primary">전체 판 자동 계수</button><button id="btnAutoOne">이 판 자동 계수</button><button id="btnAdmin" title="비밀번호를 넣으면 자동 계수 버튼이 관리자 기준으로 셈">🔒 관리자 계수</button></div>
   <div class="row"><button id="btnAutoClearAll" title="모든 판의 자동 계수 점(하늘색)만 지움">전체 판 자동 계수 지우기</button></div>
   <div class="muted">하늘색 고리 = 자동 계수 점, 주황 고리 = 직접 클릭한 점. 점 위를 <b>한 번 클릭</b>하면 자동 점·직접 점 모두 지워집니다. 전부 지우려면 「자동 계수 지우기」.</div>
   <div class="muted" id="autoInfo">같은 회차 N.C 판에 있는 점 수준은 빼고(NC0 기준) 셉니다.</div>
@@ -511,16 +506,32 @@ function openPlate(i){
   S.cur = i; const p = S.plates[i]; S.sel = null; S.mode = 'mark'; S.pick = [];
   { const r = roundIn(p); if (r && $('round').value !== r) $('round').value = r; }   // 회차 칸 = 지금 사진의 회차 (폴더·파일 이름에서)
   saveSession();
-  // 메모리 절약: 다른 판의 풀린 사진(장당 약 50MB)은 내려놓음 (필요하면 다시 읽음)
-  S.plates.forEach(q => { if (q !== p && q.img){ q.img = null; q.lod = null; } });
+  // 메모리 절약: 앞뒤 판을 뺀 다른 판의 풀린 사진(장당 약 50MB)은 내려놓음 (필요하면 다시 읽음)
+  S.plates.forEach((q, j) => { if (q !== p && q.img && Math.abs(j - i) > 1){ q.img = null; q.lod = null; } });
   if (!p.img){
     const url = URL.createObjectURL(p.file); const im = new Image();
-    im.onload = () => { p.img = im; if (!p.data.circle) guessCircle(p); else recheckCircle(p); fitView(); draw(); updateSide(); };
+    im.onload = () => { p.img = im; if (!p.data.circle) guessCircle(p); else recheckCircle(p); fitView(); draw(); updateSide(); prefetchNear(i); };
     im.src = url;
-  } else { fitView(); draw(); }
+  } else { fitView(); draw(); prefetchNear(i); }
   renderList(); updateSide();
 }
 function cur(){ return S.plates[S.cur]; }
+// 다음·이전 판 미리 준비: 사진을 넘기다 멈춘 사이(0.3초)에 사진 풀기 → 막·격자 찾기(처음 여는 판) → 화면용 축소본
+let prefetchT = 0;
+function prefetchNear(i){
+  clearTimeout(prefetchT);
+  prefetchT = setTimeout(async () => {
+    for (const j of [i + 1, i - 1]){ const q = S.plates[j]; if (!q || S.cur !== i) continue;
+      try {
+        if (!q.img){ const im = new Image(); im.src = URL.createObjectURL(q.file); await im.decode(); if (S.cur !== i) return; q.img = im; }
+        await yieldUI(); if (S.cur !== i) return;
+        if (!q.data.circle) guessCircle(q);
+        await yieldUI(); if (S.cur !== i) return;
+        lodFor(q, 0.1);
+      } catch (e) {}
+    }
+  }, 300);
+}
 
 // ---------- 기하 ----------
 // 판을 처음 열면 막 원은 자동 검출, 격자는 앞 판 것을 복사 (위치가 다르면 「정렬 미세조정」)
@@ -1391,6 +1402,7 @@ const hasAuto = p => !!(p && p.data.marks && p.data.marks.some(k => !k.manual));
 // 이 판 자동 계수: 누를 때마다 켜기/끄기 (자동 점이 있으면 지우기)
 $('btnAutoOne').onclick = async () => { const p = cur(); if (!p) return;
   if (hasAuto(p)){ clearAuto(p); updateSide(); renderList(); draw(); return; }
+  if (adminOn){ $('autoInfo').textContent = '관리자 기준으로 계수 중…'; await yieldUI(); const a = await adminCount(p); $('autoInfo').textContent = adminText(a); updateSide(); renderList(); draw(); return; }
   if (!learnedReady()){ alert(notLearnedMsg()); return; }
   $('autoInfo').textContent = '계수 중…'; await yieldUI();
   const a = await autoCount(p, true); $('autoInfo').textContent = autoText(a);
@@ -1400,6 +1412,7 @@ $('btnAutoClearAll').onclick = () => { const n = S.plates.filter(hasAuto).length
   S.plates.forEach(p => { if (hasAuto(p) || p.data.auto) clearAuto(p); }); updateSide(); renderList(); draw(); };
 $('btnAutoAll').onclick = async () => {
   if (!S.plates.length) return;
+  if (adminOn) return adminAll();
   if (!learnedReady()) return alert(notLearnedMsg());
   // 대상: 자동 점이 아직 없는 판. 직접 찍은 점이 있는 판은 비교용으로 개수 제한 없이 자동 계수
   const todo = S.plates.filter(p => !hasAuto(p) && !Object.keys(p.data.cells).length);
@@ -1455,25 +1468,21 @@ async function adminCount(p){
   save(p); return a;
 }
 function adminText(a){ return `관리자 자동 계수: 콜로니 ${a.nc0}개 (흰 점 ${a.white}·회색 ${a.grey} 포함${a.merged ? `, 붙은 점 ${a.merged}개 합침` : ''}${a.gridPrint ? `, 격자 인쇄 점 ${a.gridPrint}개 뺌` : ''}${a.onLine ? `, 한 줄 점 ${a.onLine}개 뺌` : ''})`; }
-function adminShow(){ $('adminBox').hidden = !adminOn; $('btnAdmin').textContent = adminOn ? '🔓 관리자 구역 잠그기' : '🔒 관리자 구역'; }
-$('btnAdmin').onclick = () => {
-  if (adminOn){ adminOn = false; try { sessionStorage.removeItem('gridcount:admin'); } catch (e) {} adminShow(); return; }
-  const s = prompt('관리자 비밀번호를 입력하세요'); if (s == null) return;
-  if (adminHash(s.trim()) !== ADMIN_KEY) return alert('비밀번호가 맞지 않습니다.');
-  adminOn = true; try { sessionStorage.setItem('gridcount:admin', '1'); } catch (e) {} adminShow(); };
-$('btnAdminOne').onclick = async () => { const p = cur(); if (!p || !adminOn) return;
-  if (hasAuto(p) && !confirm('이 판의 자동 점(하늘색)을 지우고 관리자 기준으로 다시 셀까요? 직접 찍은 점(주황)은 남습니다.')) return;
-  if (hasAuto(p)) clearAuto(p);
-  $('autoInfo').textContent = '관리자 기준으로 계수 중…'; await yieldUI();
-  const a = await adminCount(p); $('autoInfo').textContent = adminText(a); updateSide(); renderList(); draw(); };
-$('btnAdminAll').onclick = async () => { if (!S.plates.length || !adminOn) return;
+function adminShow(){ const b = $('btnAdmin'); b.textContent = adminOn ? '🔓 관리자 계수 켜짐' : '🔒 관리자 계수'; b.classList.toggle('on', adminOn);
+  b.title = adminOn ? '지금 「전체 판 자동 계수」「이 판 자동 계수」는 관리자 기준으로 셉니다. 누르면 끔' : '비밀번호를 넣으면 자동 계수 버튼이 관리자 기준으로 셈'; }
+async function adminAll(){
   const todo = S.plates.filter(p => !hasAuto(p) && !Object.keys(p.data.cells).length);
   if (!todo.length) return alert('자동 점이 없는 판이 없습니다. 다시 세려면 「전체 판 자동 계수 지우기」를 먼저 누르세요.');
   if (!confirm(`관리자 기준으로 판 ${todo.length}개를 자동 계수할까요?`)) return;
   let k = 0;
   for (const p of todo){ k++; $('autoInfo').textContent = `관리자 계수 중 ${k}/${todo.length} — ${p.name}`; await yieldUI();
-    await adminCount(p); if (p !== cur()) p.img = null; renderList(); }
-  $('autoInfo').textContent = `관리자 자동 계수 끝: ${todo.length}개 판.`; updateSide(); draw(); };
+    await adminCount(p); if (p !== cur()) { p.img = null; p.lod = null; } renderList(); }
+  $('autoInfo').textContent = `관리자 자동 계수 끝: ${todo.length}개 판.`; updateSide(); draw(); }
+$('btnAdmin').onclick = () => {
+  if (adminOn){ adminOn = false; try { sessionStorage.removeItem('gridcount:admin'); } catch (e) {} adminShow(); return; }
+  const s = prompt('관리자 비밀번호를 입력하세요'); if (s == null) return;
+  if (adminHash(s.trim()) !== ADMIN_KEY) return alert('비밀번호가 맞지 않습니다.');
+  adminOn = true; try { sessionStorage.setItem('gridcount:admin', '1'); } catch (e) {} adminShow(); };
 adminShow();
 // ---------- 자동 계수 학습: 직접 계수한 판을 모아 자동 계수 기준을 계속 다시 맞춤 ----------
 // 학습 자료(판별: 자동 계수 후보 점 특징 + 직접 찍은 점)는 브라우저(IndexedDB)에 쌓이고,
