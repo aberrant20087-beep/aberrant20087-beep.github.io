@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610142016';   /*APPVER*/
+  var MY = '202610142031';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -17,7 +17,7 @@
 </script>
 <title>Colony Counter</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CclipPath id='m'%3E%3Ccircle cx='29' cy='29' r='21'/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle cx='29' cy='29' r='27' fill='%23d6e8f2' stroke='%233f6f8a' stroke-width='3.5'/%3E%3Ccircle cx='29' cy='29' r='21' fill='%23fffdf6'/%3E%3Cg clip-path='url(%23m)' stroke='%238dbad1' stroke-width='1.6'%3E%3Cpath d='M19 4v50M29 4v50M39 4v50M4 19h50M4 29h50M4 39h50'/%3E%3C/g%3E%3Cg stroke='%237a4d12' stroke-width='1'%3E%3Ccircle cx='23' cy='22' r='4.6' fill='%23f2b84b'/%3E%3Ccircle cx='36' cy='33' r='5.2' fill='%23e9a23b'/%3E%3Ccircle cx='21' cy='37' r='3.6' fill='%23e07a5f'/%3E%3C/g%3E%3Ccircle cx='36' cy='33' r='8.4' fill='none' stroke='%238e5cd9' stroke-width='2.4'/%3E%3Ccircle cx='50' cy='50' r='12.5' fill='%232b6cb0' stroke='%23fff' stroke-width='2.5'/%3E%3Cpath d='M44.5 50.5l4 4 7.5-8.5' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-<meta name="version" content="202610142016">
+<meta name="version" content="202610142031">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -1169,7 +1169,7 @@ const hasImp = p => !!(p && (p.data.marks || []).some(k => k.imp));
 // 하얗게 비친 작은 점(오래 배양돼 작게 반짝이는 흰 콜로니)도 셈 — 2026-10-12 사용자 요청: 1PW-DV9·DV21 재계수 기준을 기본 자동 계수로
 // 주변(반경 막의 3%)보다 16 이상 밝고 색이 거의 없는 작은 점. 뚜껑 반사로 밝아진 곳(주변 밝기 > 막 중앙값+10), 파란·보라 글씨 둘레, 막 가장자리(반지름 91% 밖)는 뺌
 // 크기 기준은 막 반지름(사진 해상도)에 맞춰 자동으로 늘고 줆
-const WHITE = { diff: 12, satMax: 45, glare: 14, edge: 0.92 };
+const WHITE = { diff: 12, satMax: 45, glare: 999, edge: 0.92 };   /* glare 999 = 반사 구역도 셈 (2026-10-14) */
 function findWhiteSpots(p){
   const c = p.data.circle; if (!c) return [];
   const R = Math.round(c.r), s = Math.max(1, R / 610), x0 = Math.round(c.cx - R), y0 = Math.round(c.cy - R), W = 2 * R, H = 2 * R, N = W * H;
@@ -1227,9 +1227,11 @@ function findGreySpots(p){ const T = GREY.diff;
 // 점마다 여러 방향으로 좁은 띠(폭 막 반지름 1.2%, 길이 ±25%)를 그어 보고, 띠 안 점 수가 우연히 들어갈 수(전체 밀도 기준)의 4배 이상이고 7개 이상이면 그 띠의 점들을 뺌
 function onLinePoints(pts, Rm){
   const D = 0.25 * Rm, W = 0.006 * Rm, bad = new Set(), dens = pts.length / (Math.PI * Rm * Rm), expect = dens * (2 * W) * (2 * D);
-  const need = Math.max(7, Math.ceil(4 * expect));
+  const share = (2 * W) * (2 * D) / (Math.PI * D * D);   // 주변 원(반경 D) 중 띠가 차지하는 비율
   for (let i = 0; i < pts.length; i++){
     const nb = []; for (let j = 0; j < pts.length; j++){ const dx = pts[j].x - pts[i].x, dy = pts[j].y - pts[i].y; if (dx*dx + dy*dy < D*D) nb.push([j, dx, dy]); }
+    // 우연히 띠에 들어갈 수: 막 전체 밀도와 이 점 주변 밀도 중 큰 쪽 기준 (흰 점이 빽빽한 구역을 통째로 선으로 보지 않게 — 2026-10-14 사용자 지적)
+    const need = Math.max(7, Math.ceil(4 * Math.max(expect, nb.length * share)));
     if (nb.length < need) continue;
     for (let a = 0; a < 180; a += 3){
       const ux = Math.cos(a * Math.PI / 180), uy = Math.sin(a * Math.PI / 180);
@@ -1441,11 +1443,10 @@ const ADMIN_KEY = 4025704166, ADMIN_MERGE = 24 / 724;   // 붙은 점 기준: �
 const adminHash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619) >>> 0; return h; };
 let adminOn = false; try { adminOn = sessionStorage.getItem('gridcount:admin') === '1'; } catch (e) {}
 // 붙거나 겹친 자동 점을 하나로 (묶음의 가운데에 한 점)
-function mergeTouching(pts, gap){
-  const n = pts.length, par = pts.map((_, i) => i), f = i => { while (par[i] !== i) i = par[i] = par[par[i]]; return i; };
-  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) if (Math.hypot(pts[i].x - pts[j].x, pts[i].y - pts[j].y) < gap){ const a = f(i), b = f(j); if (a !== b) par[b] = a; }
-  const g = new Map(); pts.forEach((q, i) => { const r = f(i); if (!g.has(r)) g.set(r, []); g.get(r).push(q); });
-  return [...g.values()].map(arr => arr.length === 1 ? arr[0] : Object.assign({}, arr[0], { x: Math.round(arr.reduce((s, q) => s + q.x, 0) / arr.length), y: Math.round(arr.reduce((s, q) => s + q.y, 0) / arr.length), r: Math.max(...arr.map(q => q.r)) }));
+function mergeTouching(pts, gap){   // 사슬로 잇지 않음: 빽빽한 구역이 점 하나로 뭉치지 않게 (2026-10-14 사용자 지적)
+  const out = [];
+  for (const q of pts) if (!out.some(u => Math.hypot(u.x - q.x, u.y - q.y) < gap)) out.push(q);
+  return out;
 }
 async function adminCount(p){
   await ensureCircle(p); await yieldUI();
