@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610142031';   /*APPVER*/
+  var MY = '202610151618';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -17,7 +17,7 @@
 </script>
 <title>Colony Counter</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CclipPath id='m'%3E%3Ccircle cx='29' cy='29' r='21'/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle cx='29' cy='29' r='27' fill='%23d6e8f2' stroke='%233f6f8a' stroke-width='3.5'/%3E%3Ccircle cx='29' cy='29' r='21' fill='%23fffdf6'/%3E%3Cg clip-path='url(%23m)' stroke='%238dbad1' stroke-width='1.6'%3E%3Cpath d='M19 4v50M29 4v50M39 4v50M4 19h50M4 29h50M4 39h50'/%3E%3C/g%3E%3Cg stroke='%237a4d12' stroke-width='1'%3E%3Ccircle cx='23' cy='22' r='4.6' fill='%23f2b84b'/%3E%3Ccircle cx='36' cy='33' r='5.2' fill='%23e9a23b'/%3E%3Ccircle cx='21' cy='37' r='3.6' fill='%23e07a5f'/%3E%3C/g%3E%3Ccircle cx='36' cy='33' r='8.4' fill='none' stroke='%238e5cd9' stroke-width='2.4'/%3E%3Ccircle cx='50' cy='50' r='12.5' fill='%232b6cb0' stroke='%23fff' stroke-width='2.5'/%3E%3Cpath d='M44.5 50.5l4 4 7.5-8.5' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-<meta name="version" content="202610142031">
+<meta name="version" content="202610151618">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -412,7 +412,7 @@ async function applyPointFiles(files){
       const j = JSON.parse(await f.text()), photo = cleanName(j.photo || f.name.replace(/\.점\.json$/i, '.jpg')), base = photo.replace(/\.[^.]+$/, '');
       const pts = (j.points || []).filter(q => Array.isArray(q) && isFinite(q[0]) && isFinite(q[1])); if (!pts.length) continue;
       const p = S.plates.find(q => q.name === photo) || S.plates.find(q => q.name.replace(/\.[^.]+$/, '') === base); if (!p) continue;
-      p.data.marks = pts.map(([x, y]) => ({x: +x, y: +y, manual: true})); p.data.auto = null; save(p); n++;
+      p.data.marks = pts.map(([x, y]) => ({x: +x, y: +y, manual: true, pf: 1})); p.data.auto = null; p.data.adminRun = null; save(p); n++;
     } catch(e){}
   }
   if (n){ renderList(); updateSide(); draw(); $('status').textContent += ` · 점 좌표 ${n}장 넣음`; }
@@ -1521,8 +1521,26 @@ function admStatus(){ const M = admModel(); if (!M || !M.plates) return '관리�
   return `관리자 학습 ${M.plates}판 · 지운 점 ${r.pos || 0}개 → 빼기 규칙 ${r.active ? '적용 중' : '아직 안 씀'} · 다시 직접 찍은 점 ${a.pos || 0}개 → 더하기 규칙 ${a.active ? '적용 중' : '아직 안 씀'} (각각 2판 이상·3개 이상, 새 판 예측이 좋아져야 켜짐)`; }
 const admGap = p => 16 * Math.max(1, p.data.circle.r / 610);
 // 판 하나의 관리자 학습 자료: 관리자 계수가 찍은 점(남김 0 / 지움 1) + 관리자 계수가 안 찍은 후보(직접 찍음 1 / 아님 0)
+async function adminVirtualRun(p){   /* 학습 규칙 없이 기본 관리자 기준으로만 세어 본 점 (판 기록은 그대로) */
+  const q = Object.assign({}, p, { data: Object.assign({}, p.data, { marks: [], auto: null, adminRun: null }) }), s0 = save, m0 = S.admM;
+  save = () => {}; S.admM = null;
+  try { await adminCount(q); } finally { save = s0; S.admM = m0; }
+  return q.data.marks.map(k => ({x: k.x, y: k.y}));
+}
 async function adminSample(p){
-  await ensureCircle(p); const C = allCandidates(p).cands, run = p.data.adminRun, gap = admGap(p);
+  await ensureCircle(p);
+  if (!p.data.adminRun){   /* 2026-10-15 사용자 지시: 점 파일로 넣은 점(Claude 계수)·직접 찍은 점을 모두 「직접 계수」로 보고 관리자 학습 */
+    const C = allCandidates(p).cands, gap = admGap(p), pts = await adminVirtualRun(p), truth = (p.data.marks || []).filter(k => !k.imp), rows = [], rf = f => f.map(v => +(+v).toFixed(3));
+    let nDel = 0, nAdd = 0;
+    for (const q of pts){ let bi = -1, bd = gap; C.forEach((c, i) => { const d = Math.hypot(c.x - q.x, c.y - q.y); if (d < bd){ bd = d; bi = i; } }); if (bi < 0) continue;
+      const del = truth.some(k => Math.hypot(k.x - q.x, k.y - q.y) < gap) ? 0 : 1; nDel += del; rows.push({ t: 'r', y: del, f: rf(C[bi].f) }); }
+    for (const c of C){ if (pts.some(q => Math.hypot(q.x - c.x, q.y - c.y) < gap)) continue;
+      const lim = HALF_OVERLAP * Math.max(Math.sqrt(c.area / Math.PI) + 12, MATCH_MIN_R), y = truth.some(m => Math.hypot(m.x - c.x, m.y - c.y) <= lim) ? 1 : 0;
+      nAdd += y; rows.push({ t: 'a', y, f: rf(c.f) }); }
+    if (p !== cur()){ p.img = null; p.lod = null; }
+    return { at: new Date().toISOString(), name: p.name, nDel, nAdd, rows, src: 'truth' };
+  }
+  const C = allCandidates(p).cands, run = p.data.adminRun, gap = admGap(p);
   const autos = (p.data.marks || []).filter(k => !k.manual), man0 = run.man0 || [];
   const man = (p.data.marks || []).filter(k => k.manual && !k.imp && !man0.some(([x, y]) => Math.hypot(x - k.x, y - k.y) < 2));
   const rows = [], rf = f => f.map(v => +(+v).toFixed(3));
@@ -1535,8 +1553,9 @@ async function adminSample(p){
   if (p !== cur()){ p.img = null; p.lod = null; }
   return { at: new Date().toISOString(), name: p.name, nDel, nAdd, rows };
 }
+const admLearnable = p => p && p.label !== 'N.C' && !hasImp(p) && (p.data.adminRun || (p.data.marks || []).some(k => k.pf) || (adminOn && (p.data.marks || []).some(k => k.manual)));
 async function adminLearnPlate(p, silent, noRelearn){
-  if (!p || !p.data.adminRun) return null;
+  if (!p || !admLearnable(p)) return null;
   $('learnState').textContent = `「${p.name}」 관리자 학습 자료 만드는 중…`; await yieldUI();
   S.train.adm = S.train.adm || {}; const s = await adminSample(p); S.train.adm[trainId(p)] = s;
   p.data.learnedAt = new Date().toISOString(); save(p);
@@ -1717,7 +1736,7 @@ async function relearn(reason){
 }
 async function learnPlate(p, silent){
   if (!p || p.label === 'N.C') return;
-  if (p.data.adminRun) return adminLearnPlate(p, silent);   /* 관리자 계수한 판 = 관리자 학습 */
+  if (p.data.adminRun || (p.data.marks || []).some(k => k.pf) || (adminOn && admLearnable(p))) return adminLearnPlate(p, silent);   /* 관리자 계수 판·점 파일 판 = 관리자 학습 */
   if (hasImp(p)){ if (!silent) alert('이 판은 다른 프로그램 표시(보라)가 그려진 사진이라 학습에 쓰지 않습니다. 사진 위 표시가 콜로니 모양을 가려 오히려 엉뚱한 곳에 점을 찍게 됩니다.'); return; }
   if (!(p.data.marks || []).some(k => k.manual && !k.imp)){ if (!silent) alert('이 판에는 직접 찍은 점(주황)이 없습니다. 직접 계수를 끝낸 뒤 학습시키세요.'); return; }
   $('learnState').textContent = `「${p.name}」 학습 자료 만드는 중…`; await yieldUI();
@@ -1748,11 +1767,11 @@ function showCal(){
 }
 $('btnLearn').onclick = () => learnPlate(cur());
 $('btnLearnAll').onclick = async () => {
-  const adm = S.plates.filter(p => p.label !== 'N.C' && p.data.done && p.data.adminRun);
-  if (adm.length && confirm(`관리자 계수로 센 완료 판 ${adm.length}개를 관리자 학습에 넣을까요?`)){
+  const adm = S.plates.filter(p => p.data.done && admLearnable(p) && (p.data.adminRun || (p.data.marks || []).some(k => k.pf) || adminOn));
+  if (adm.length && confirm(`관리자 학습에 넣을 완료 판 ${adm.length}개 (관리자 계수 판·점 파일로 넣은 판${adminOn ? '·직접 계수 판' : ''})를 학습할까요?`)){
     for (let i = 0; i < adm.length; i++){ $('learnState').textContent = `관리자 학습 자료 ${i+1}/${adm.length} — ${adm[i].name}`; await adminLearnPlate(adm[i], true, true); }
     await admRelearn(); $('learnState').textContent = admStatus(); renderList(); }
-  const list = S.plates.filter(p => p.label !== 'N.C' && p.data.done && !p.data.adminRun && !hasImp(p) && (p.data.marks || []).some(k => k.manual && !k.imp));
+  const list = S.plates.filter(p => p.label !== 'N.C' && p.data.done && !adm.includes(p) && !hasImp(p) && (p.data.marks || []).some(k => k.manual && !k.imp));
   if (!list.length){ if (!adm.length) alert('✔ 완료로 표시했고 직접 찍은 점이 있는 판이 없습니다.'); return; }
   if (!confirm(`완료한 판 ${list.length}개를 학습 자료에 넣고 기준을 다시 맞출까요?`)) return;
   for (let i = 0; i < list.length; i++){ $('learnState').textContent = `학습 자료 만드는 중 ${i+1}/${list.length} — ${list[i].name}`; await yieldUI();
