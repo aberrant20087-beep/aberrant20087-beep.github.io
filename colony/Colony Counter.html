@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610151635';   /*APPVER*/
+  var MY = '202610161300';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -17,7 +17,7 @@
 </script>
 <title>Colony Counter</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CclipPath id='m'%3E%3Ccircle cx='29' cy='29' r='21'/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle cx='29' cy='29' r='27' fill='%23d6e8f2' stroke='%233f6f8a' stroke-width='3.5'/%3E%3Ccircle cx='29' cy='29' r='21' fill='%23fffdf6'/%3E%3Cg clip-path='url(%23m)' stroke='%238dbad1' stroke-width='1.6'%3E%3Cpath d='M19 4v50M29 4v50M39 4v50M4 19h50M4 29h50M4 39h50'/%3E%3C/g%3E%3Cg stroke='%237a4d12' stroke-width='1'%3E%3Ccircle cx='23' cy='22' r='4.6' fill='%23f2b84b'/%3E%3Ccircle cx='36' cy='33' r='5.2' fill='%23e9a23b'/%3E%3Ccircle cx='21' cy='37' r='3.6' fill='%23e07a5f'/%3E%3C/g%3E%3Ccircle cx='36' cy='33' r='8.4' fill='none' stroke='%238e5cd9' stroke-width='2.4'/%3E%3Ccircle cx='50' cy='50' r='12.5' fill='%232b6cb0' stroke='%23fff' stroke-width='2.5'/%3E%3Cpath d='M44.5 50.5l4 4 7.5-8.5' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-<meta name="version" content="202610151635">
+<meta name="version" content="202610161300">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -162,6 +162,7 @@ body.resizing{cursor:col-resize;user-select:none}
   <h1><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CclipPath id='m'%3E%3Ccircle cx='29' cy='29' r='21'/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle cx='29' cy='29' r='27' fill='%23d6e8f2' stroke='%233f6f8a' stroke-width='3.5'/%3E%3Ccircle cx='29' cy='29' r='21' fill='%23fffdf6'/%3E%3Cg clip-path='url(%23m)' stroke='%238dbad1' stroke-width='1.6'%3E%3Cpath d='M19 4v50M29 4v50M39 4v50M4 19h50M4 29h50M4 39h50'/%3E%3C/g%3E%3Cg stroke='%237a4d12' stroke-width='1'%3E%3Ccircle cx='23' cy='22' r='4.6' fill='%23f2b84b'/%3E%3Ccircle cx='36' cy='33' r='5.2' fill='%23e9a23b'/%3E%3Ccircle cx='21' cy='37' r='3.6' fill='%23e07a5f'/%3E%3C/g%3E%3Ccircle cx='36' cy='33' r='8.4' fill='none' stroke='%238e5cd9' stroke-width='2.4'/%3E%3Ccircle cx='50' cy='50' r='12.5' fill='%232b6cb0' stroke='%23fff' stroke-width='2.5'/%3E%3Cpath d='M44.5 50.5l4 4 7.5-8.5' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" alt="" style="height:26px;width:26px;vertical-align:-6px;margin-right:8px">Colony Counter<small>멤브레인 필터 배지 · 배포 SEOL(신승근)</small></h1>
   <label class="btn" title="여러 장 한꺼번에 선택 가능 (폴더 안에서 Ctrl+A). 사진·폴더를 화면에 끌어다 놓아도 됩니다. 연 사진은 목록에 추가됩니다.">사진 열기<input id="fileIn" type="file" accept="image/*,.jpg,.jpeg,.png,.json" multiple hidden></label>
   <label class="btn" title="폴더를 고르면 안의 사진(하위 폴더 포함)을 한꺼번에 엽니다. 폴더 구조(예: 날짜 > 구역)가 왼쪽 목록에 그대로 묶입니다.">폴더 열기<input id="dirIn" type="file" webkitdirectory multiple hidden></label>
+  <label class="muted" title="사진을 넣으면 배지 뚜껑의 인쇄 라벨(예: (3) ACF-SV1)을 읽어 프로그램 안 사진 이름을 「3_ACF-SV1.jpg」로 바꿉니다. 디스크의 사진 파일 이름은 그대로입니다." style="white-space:nowrap"><input type="checkbox" id="autoLabel" checked> 라벨로 이름 자동 변경</label>
   <input id="round" type="hidden"><!-- 회차 칸은 화면에서 뺌. 회차는 폴더·파일 이름에서 자동으로 읽고, 예전 저장 자료를 찾는 열쇠로만 씀 -->
   <span class="muted" id="status"></span>
   <span class="muted" id="saveState" title="점을 찍을 때마다 이 브라우저에 자동 저장됩니다. 같은 회차·같은 사진을 다시 열면 이어서 작업합니다."></span>
@@ -438,6 +439,7 @@ function addFiles(list, restoring){
   if (!restoring) for (const p of S.plates) if (added.has(p.id)) for (const g of groupChain(p.group)) S.collapsed.delete(g);
   const firstNew = S.plates.findIndex(p => added.has(p.id));
   renderList(); openPlate(Math.max(0, firstNew));
+  if (!restoring && $('autoLabel').checked){ const fresh = S.plates.filter(p => added.has(p.id) && !isLabelName(p.name)); if (fresh.length) setTimeout(() => autoLabelNames(fresh), 300); }
   if (!restoring){ const nG = new Set(items.map(x => x.group).filter(Boolean)).size; $('status').textContent = `사진 ${items.length}장 추가${nG ? ` (폴더 ${nG}개)` : ''} · 판 ${S.plates.length}개`; }
 }
 const natCmp = (a, b) => a.localeCompare(b, 'ko', {numeric: true});
@@ -469,6 +471,73 @@ window.addEventListener('drop', async e => { e.preventDefault(); if (S.dragRow !
   $('status').textContent = '폴더 읽는 중…';
   for (const en of items) await walk(en);
   addFiles(out); });
+// ---------- 라벨 읽어 사진 이름 바꾸기 (2026-10-16): 배지 뚜껑의 인쇄 라벨 「(3) ACF-SV1」을 글자 인식해 사진 이름을 「3_ACF-SV1.jpg」로 ----------
+// 글자 인식(Tesseract)은 처음 쓸 때 인터넷에서 한 번 받아 옴. 사진 파일 자체(디스크)는 그대로이고, 프로그램 안 이름만 바뀜(찍은 점·보관 사진도 함께 옮김)
+const PLATE_LABELS = '3_ACF-SV1,4_1MF-SV1,5_1WS-SV1,5-1_2WS-SV1,6_2MF-SV1,7_1UV-SV1,8_1HE-SV1,9_2TK-SV1,10_2HE-SV1,11_2HE-SV2,12-1_RO-SV1,12-2_RO-SV2,12-3_RO-SV3,13_MDG-SV1,14-1_EDI-SV1,14-2_EDI-SV2,15_3MF-SV1,16_3MF-SV2,17_4PU-SV1,18_5PU-SV1,19_4PU-SV2,20_5PU-SV2,21_3UV-SV1,22_4UV-SV1,23_1PW-DV1,24_1PW-DV2,25_1PW-DV3,26_1PW-DV4,27_1PW-DV5,28_1PW-DV6,29_1PW-DV7,30_1PW-DV8,31_1PW-DV9,32_1PW-DV10,33_1PW-DV11,34_1PW-DV12,35_1PW-DV13,36_1PW-DV14,37_1PW-DV15,38_1PW-DV16,39_1PW-DV17,40_1PW-DV18,41_1PW-DV19,42_1PW-DV20,43_1PW-DV21,44_1PW-DV22,45_1PW-DV23,46_2PW-DV1,47_2PW-DV2,48_2PW-DV3,49_2PW-DV4,50_2PW-DV5,51_2PW-DV6,52_2PW-DV7,53_2PW-DV8,54_2PW-DV9,55_2PW-DV10,56_2PW-DV11,57_2PW-DV12,58_2PW-DV13,59_2PW-DV14,60_2PW-DV15,61_2PW-DV16,62_2PW-DV17,63_2PW-DV18,64_2PW-DV19,65_3HE-SV1,66_4HE-SV1,67_3HE-SV2,68_4HE-SV2'.split(',').map(s => { const [no, loc] = s.split('_'); return { no, loc, name: s }; });
+const isLabelName = name => { const b = name.replace(/\.[^.]+$/, ''); return /^N\.?C$/i.test(b) || PLATE_LABELS.some(L => L.name === b); };
+let tessP = null, tessW = null;
+function loadTess(){ return tessP || (tessP = new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+  s.onload = () => ok(window.Tesseract); s.onerror = () => { tessP = null; no(new Error('글자 인식 도구를 불러오지 못했습니다(인터넷 연결 확인).')); }; document.head.appendChild(s); })); }
+async function tessWorker(){ if (tessW) return tessW; const T = await loadTess(); tessW = await T.createWorker('eng');
+  await tessW.setParameters({ tessedit_char_whitelist: '0123456789()-ACDEFGHKMNOPRSTUVW', tessedit_pageseg_mode: '11' }); return tessW; }
+const editDist = (a, b) => { const d = Array.from({length: a.length + 1}, (_, i) => [i]); for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) d[i][j] = Math.min(d[i-1][j] + 1, d[i][j-1] + 1, d[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1)); return d[a.length][b.length]; };
+// 인식한 글자에서 가장 비슷한 라벨 찾기: 「(번호) 위치」를 함께 비교, 두 번째 후보와 차이가 나야 채택
+function matchLabel(text){
+  const t = text.toUpperCase().replace(/[^0-9A-Z()\-\n ]/g, ' '), toks = t.split(/\s+/).filter(Boolean);
+  const cands = [];
+  for (let i = 0; i < toks.length; i++){ const one = toks[i], two = toks[i] + (toks[i+1] || ''); for (const s of [one, two]) if (/[A-Z]{2}/.test(s) && /\d/.test(s) && s.length >= 6) cands.push(s.replace(/\s/g, '')); }
+  let best = null, second = 99;
+  for (const L of PLATE_LABELS){ const full = `(${L.no})${L.loc}`; let sc = 99;
+    for (const c of cands){ const m = c.match(/^\(?([\dO]{1,2}(?:-\d)?)\)/), num = m ? m[1].replace(/O/g, '0') : null, rest = m ? c.slice(m[0].length) : c;   /* 괄호 번호가 읽히면 번호도 맞아야 함 */
+      const s = Math.min(editDist(c, full), editDist(rest, L.loc) + (num === null ? 1 : num === L.no ? 0 : 2)); if (s < sc) sc = s; }
+    if (!best || sc < best.sc){ if (best) second = Math.min(second, best.sc); best = { L, sc }; } else if (sc < second) second = sc; }
+  if (!best || best.sc > 2 || second - best.sc < 1) return null;
+  return best.L;
+}
+// 사진 위쪽(라벨 자리)을 잘라 흑백으로 키운 뒤 글자 인식. 못 읽으면 흑백 기준·자르는 범위를 바꿔 다시 (최대 5번)
+async function readPlateLabel(p){
+  await loadImg(p); const im = p.img, W = im.naturalWidth, H = im.naturalHeight, wk = await tessWorker(); let text = '';
+  for (const [top, th, frac] of [[0, 110, 0.55], [0, 150, 0.55], [0, 80, 0.55], [0.1, 0, 0.5], [0, 125, 1]]){
+    const sh = H * frac, w = Math.min(2000, W), s = w / W, h = Math.round(sh * s);
+    const c2 = document.createElement('canvas'); c2.width = w; c2.height = h; const g = c2.getContext('2d', {willReadFrequently: true}); g.drawImage(im, 0, H * top, W, sh, 0, 0, w, h);
+    const d = g.getImageData(0, 0, w, h), a = d.data; let t = th;
+    if (!t){ const hist = new Uint32Array(256); for (let i = 0; i < a.length; i += 4) hist[(0.299*a[i] + 0.587*a[i+1] + 0.114*a[i+2]) | 0]++; let acc = 0; for (t = 0; t < 256 && acc < a.length / 4 * 0.06; t++) acc += hist[t]; t += 25; }   /* 가장 어두운 6% + 여유 */
+    for (let i = 0; i < a.length; i += 4){ const r = a[i], gg = a[i+1], b = a[i+2]; let v = 0.299*r + 0.587*gg + 0.114*b; if (b > r + 25 && b > gg + 10) v = 255;   /* 파란 펜 글씨는 지움 */
+      v = v < t ? 0 : 255; a[i] = a[i+1] = a[i+2] = v; }
+    g.putImageData(d, 0, 0);
+    const r = await wk.recognize(c2); text += ' ' + r.data.text; const L = matchLabel(r.data.text); if (L) return { text, L };
+  }
+  return { text, L: null };
+}// 판 이름 바꾸기: 찍은 점(브라우저 저장)과 보관 사진도 새 이름으로 옮김
+async function renamePlate(p, newName){
+  if (newName === p.name) return true;
+  const nid = plateId(p.group, newName); if (S.plates.some(q => q !== p && q.id === nid)) return false;
+  const oldKey = plateKey(p), oldId = p.id, wasCk = S.checked.has(oldId);
+  p.orig = p.orig || p.name; p.name = newName; p.id = nid; Object.assign(p, parseName(newName));
+  save(p); if (oldKey !== plateKey(p)) localStorage.removeItem(oldKey);
+  if (p.file){ await idbPut('photos', nid, p.file); await idbDel('photos', oldId); }
+  if (wasCk){ S.checked.delete(oldId); S.checked.add(nid); }
+  return true;
+}
+// 여러 판 라벨 읽기 → 이름 바꾸기 (이미 라벨 이름인 판은 건너뜀)
+async function autoLabelNames(ps, force){
+  const todo = ps.filter(p => force || !isLabelName(p.name)); if (!todo.length) return;
+  const curP = cur(), done = [], fail = [], dup = [];
+  for (let i = 0; i < todo.length; i++){ const p = todo[i];
+    $('status').textContent = `라벨 읽는 중 ${i + 1}/${todo.length} — ${p.name}`; await yieldUI();
+    let res; try { res = await readPlateLabel(p); } catch (e) { $('status').textContent = e.message; alert(e.message); return; }
+    if (p !== cur()){ p.img = null; p.lod = null; }
+    if (!res.L){ fail.push(p.name); continue; }
+    const ext = (p.name.match(/\.[^.]+$/) || ['.jpg'])[0], nn = res.L.name + ext.toLowerCase(), old = p.name;
+    if (await renamePlate(p, nn)) done.push(`${old} → ${nn}`); else dup.push(`${old}(${res.L.name} 이미 있음)`);
+  }
+  sortPlates(); S.cur = Math.max(0, S.plates.indexOf(curP)); renderList(); updateSide(); saveSession();
+  $('status').textContent = `라벨로 이름 바꿈 ${done.length}장` + (fail.length ? ` · 라벨 못 읽음 ${fail.length}장` : '') + (dup.length ? ` · 같은 이름 있어 그대로 ${dup.length}장` : '');
+  if (fail.length || dup.length) alert(`라벨로 이름 바꿈 ${done.length}장.` + (fail.length ? `\n\n라벨을 못 읽어 그대로 둔 사진 ${fail.length}장 (N.C 판·라벨이 가려진 사진 등):\n${fail.join(', ')}` : '') + (dup.length ? `\n\n같은 폴더에 같은 라벨 이름이 이미 있어 그대로 둔 사진:\n${dup.join(', ')}` : '') + '\n\n이름은 사진 오른쪽 클릭 → 「이름 직접 바꾸기」로 직접 고칠 수 있습니다.');
+}
+try { const v = localStorage.getItem(LS_KEY + 'autoLabel'); if (v !== null) $('autoLabel').checked = v === '1'; } catch (e) {}
+$('autoLabel').onchange = () => { try { localStorage.setItem(LS_KEY + 'autoLabel', $('autoLabel').checked ? '1' : '0'); } catch (e) {} };
 // 체크한 사진을 다른 폴더(상위/하위)로 옮기기: 찍은 점·보관 사진도 함께 옮김
 async function moveToGroup(ids, group){
   group = group.split('/').map(s => s.trim()).filter(Boolean).join('/');
@@ -498,6 +567,10 @@ function showMoveMenu(x, y, ids){
   m.appendChild(head);
   const item = (text, fn, dis) => { const d = document.createElement('div'); d.textContent = text; d.style.cssText = `padding:6px 12px;cursor:${dis ? 'default' : 'pointer'};white-space:nowrap;${dis ? 'opacity:.4' : ''}`;
     if (!dis){ d.onmouseenter = () => d.style.background = 'var(--panel2)'; d.onmouseleave = () => d.style.background = ''; d.onclick = async () => { m.remove(); await fn(); }; } m.appendChild(d); };
+  item('🔤 라벨 읽어 이름 바꾸기', () => autoLabelNames(ps, true));
+  item('✎ 이름 직접 바꾸기…', async () => { const p0 = ps[0]; const nn = prompt('새 사진 이름 (예: 3_ACF-SV1.jpg)', p0.name); if (!nn || !nn.trim() || nn.trim() === p0.name) return;
+    const v = /\.[^.]+$/.test(nn.trim()) ? nn.trim() : nn.trim() + (p0.name.match(/\.[^.]+$/) || ['.jpg'])[0];
+    if (!(await renamePlate(p0, v))) return alert('같은 폴더에 같은 이름의 사진이 이미 있습니다.'); sortPlates(); renderList(); updateSide(); saveSession(); }, ps.length !== 1);
   item('⇱ 폴더에서 빼기 (폴더 밖으로)', () => moveToGroup(ids, ''), here.size === 1 && here.has(''));
   if (groups.length){ const t = document.createElement('div'); t.textContent = '이 폴더로 옮기기'; t.style.cssText = 'padding:6px 12px 2px;color:var(--muted);font-size:11.5px;border-top:1px solid var(--rule);margin-top:3px'; m.appendChild(t);
     for (const g of groups) item('　'.repeat(g.split('/').length - 1) + '📁 ' + g.split('/').pop(), () => moveToGroup(ids, g), here.size === 1 && here.has(g)); }
