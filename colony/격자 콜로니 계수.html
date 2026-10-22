@@ -7,7 +7,7 @@
 // 업데이트 불러오기: 「업데이트」로 받은 새 버전은 프로그램 파일을 고치지 않고 이 브라우저 저장소에 보관해 두고,
 // 이 파일보다 새것이면 그 버전으로 화면을 그림 (파일을 브라우저가 고쳐 쓰면 윈도우가 "인터넷에서 받은 파일"로 표시해 열리지 않게 막으므로)
 (function(){
-  var MY = '202610161300';   /*APPVER*/
+  var MY = '202610221716';   /*APPVER*/
   try {
     if (location.search.indexOf('original') >= 0) return;   // 주소 끝에 ?original 을 붙이면 이 파일 버전 그대로
     var v = localStorage.getItem('gridcount:app:ver'), code = v && localStorage.getItem('gridcount:app:code');
@@ -17,7 +17,7 @@
 </script>
 <title>Colony Counter</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CclipPath id='m'%3E%3Ccircle cx='29' cy='29' r='21'/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle cx='29' cy='29' r='27' fill='%23d6e8f2' stroke='%233f6f8a' stroke-width='3.5'/%3E%3Ccircle cx='29' cy='29' r='21' fill='%23fffdf6'/%3E%3Cg clip-path='url(%23m)' stroke='%238dbad1' stroke-width='1.6'%3E%3Cpath d='M19 4v50M29 4v50M39 4v50M4 19h50M4 29h50M4 39h50'/%3E%3C/g%3E%3Cg stroke='%237a4d12' stroke-width='1'%3E%3Ccircle cx='23' cy='22' r='4.6' fill='%23f2b84b'/%3E%3Ccircle cx='36' cy='33' r='5.2' fill='%23e9a23b'/%3E%3Ccircle cx='21' cy='37' r='3.6' fill='%23e07a5f'/%3E%3C/g%3E%3Ccircle cx='36' cy='33' r='8.4' fill='none' stroke='%238e5cd9' stroke-width='2.4'/%3E%3Ccircle cx='50' cy='50' r='12.5' fill='%232b6cb0' stroke='%23fff' stroke-width='2.5'/%3E%3Cpath d='M44.5 50.5l4 4 7.5-8.5' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-<meta name="version" content="202610161300">
+<meta name="version" content="202610221716">
 <meta name="author" content="SEOL(신승근)">
 <link href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" rel="stylesheet">
 <script>/* SheetJS xlsx 0.18.5 (Apache-2.0) */
@@ -220,7 +220,7 @@ body.resizing{cursor:col-resize;user-select:none}
   <div class="ncbox">
     <div class="row"><b>자동 계수 학습 (정확도 올리기)</b></div>
     <div class="muted">직접 계수를 끝낸 판을 학습시키면, 쌓인 판 전체로 자동 계수 기준을 다시 맞춥니다. 판을 셀수록 점점 정확해집니다.</div>
-    <div class="autoBtns" style="grid-template-columns:repeat(3,1fr)"><button id="btnLearn" class="primary" title="지금 판의 직접 계수(주황)를 정답으로 학습">이 판으로 학습</button><button id="btnLearnAll" title="✔ 완료한 판 전부 학습">완료 판 전부 학습</button><button id="btnLearnReset" title="쌓인 학습 자료와 학습 기준을 지우고 처음 상태로 (관리자 계수가 켜져 있으면 관리자 학습을 초기화)">학습 초기화</button></div>
+    <div class="autoBtns" style="grid-template-columns:repeat(3,1fr)"><button id="btnLearn" class="primary" title="지금 판의 직접 계수(주황)를 정답으로 학습">이 판으로 학습</button><button id="btnLearnAll" title="✔ 완료한 판 전부 학습">완료 판 전부 학습</button><button id="btnLearnReset" title="쌓인 학습 자료와 학습 기준을 지우고 처음 상태로">학습 초기화</button></div>
     <div class="row"><label><input type="checkbox" id="autoLearn" checked> ✔ 완료 표시하면 자동으로 학습</label></div>
     <div id="learnState" class="muted"></div>
     <div id="calInfo" class="muted"></div>
@@ -228,7 +228,7 @@ body.resizing{cursor:col-resize;user-select:none}
     <div class="row"><button id="btnParamsOut" title="맞춘 기준을 파일로 (다른 사람과 나누기)">학습 기준 내보내기</button><label class="btn" title="다른 사람이 맞춘 기준 가져오기">가져오기<input id="paramsIn" type="file" accept=".json" hidden></label></div>
   </div>
  <div class="autoBtns"><button id="btnAutoAll" class="primary" title="자동 점이 없는 모든 판을 자동 계수">전체 판 자동 계수</button><button id="btnAutoOne" title="지금 판을 자동 계수 (자동 점이 있으면 지움)">이 판 자동 계수</button>
-    <button id="btnAutoClearAll" title="모든 판의 자동 계수 점(하늘색)만 지움. 직접 찍은 점(주황)은 남음">전체 판 자동 점 지우기</button><button id="btnAdmin" title="비밀번호를 넣으면 자동 계수 버튼이 관리자 기준으로 셈">🔒 관리자 계수</button></div>
+    <button id="btnAutoClearAll" title="모든 판의 자동 계수 점(하늘색)만 지움. 직접 찍은 점(주황)은 남음">전체 판 자동 점 지우기</button></div>
   <div class="muted">하늘색 고리 = 자동 계수 점, 주황 고리 = 직접 클릭한 점. 점 위를 <b>한 번 클릭</b>하면 자동 점·직접 점 모두 지워집니다. 전부 지우려면 「자동 계수 지우기」.</div>
   <div class="muted" id="autoInfo">같은 회차 N.C 판에 있는 점 수준은 빼고(NC0 기준) 셉니다.</div>
   <div class="row"><label><input type="checkbox" id="showMarks" checked> 콜로니 점·원 표시</label></div>
@@ -974,7 +974,7 @@ $('gAng').onchange = () => { const p = cur(); if (p && p.data.grid){ p.data.grid
 $('gSize').onchange = () => { const p = cur(); if (p && p.data.grid){ p.data.grid.size = +$('gSize').value; save(p); draw(); } };
 // 계수 완료 표시/취소 (목록 ✔ 칸, 도구 막대 버튼, C키, 오른쪽 버튼 모두 같은 동작). 완료해도 다른 사진으로 넘어가지 않음
 function toggleDone(p){ if (!p) return; p.data.done = !p.data.done; p.data.doneAt = p.data.done ? new Date().toISOString() : null; save(p); updateSide(); renderList();
-  if (p.data.done && $('autoLearn').checked && (p.data.adminRun || (p.data.marks || []).some(k => k.manual))) learnPlate(p, true); }
+  if (p.data.done && $('autoLearn').checked && (p.data.marks || []).some(k => k.manual)) learnPlate(p, true); }
 $('btnDoneTool').onclick = () => toggleDone(cur());
 // 점 크기 (화면 기준 반지름 px) — 브라우저에 기억
 function setDotSize(v){ S.dotPx = Math.min(12, Math.max(1.5, Math.round(v*2)/2)); $('dotSize').value = S.dotPx; $('dotSizeVal').textContent = S.dotPx.toFixed(1);
@@ -1487,7 +1487,6 @@ const hasAuto = p => !!(p && p.data.marks && p.data.marks.some(k => !k.manual));
 // 이 판 자동 계수: 누를 때마다 켜기/끄기 (자동 점이 있으면 지우기)
 $('btnAutoOne').onclick = async () => { const p = cur(); if (!p) return;
   if (hasAuto(p)){ clearAuto(p); updateSide(); renderList(); draw(); return; }
-  if (adminOn){ $('autoInfo').textContent = '관리자 기준으로 계수 중…'; await yieldUI(); const a = await adminCount(p); $('autoInfo').textContent = adminText(a); updateSide(); renderList(); draw(); return; }
   if (!learnedReady()){ alert(notLearnedMsg()); return; }
   $('autoInfo').textContent = '계수 중…'; await yieldUI();
   const a = await autoCount(p, true); $('autoInfo').textContent = autoText(a);
@@ -1497,7 +1496,6 @@ $('btnAutoClearAll').onclick = () => { const n = S.plates.filter(hasAuto).length
   S.plates.forEach(p => { if (hasAuto(p) || p.data.auto) clearAuto(p); }); updateSide(); renderList(); draw(); };
 $('btnAutoAll').onclick = async () => {
   if (!S.plates.length) return;
-  if (adminOn) return adminAll();
   if (!learnedReady()) return alert(notLearnedMsg());
   // 대상: 자동 점이 아직 없는 판. 직접 찍은 점이 있는 판은 비교용으로 개수 제한 없이 자동 계수
   const todo = S.plates.filter(p => !hasAuto(p) && !Object.keys(p.data.cells).length);
@@ -1511,163 +1509,6 @@ $('btnAutoAll').onclick = async () => {
     renderList(); }
   $('autoInfo').textContent = `자동 계수 끝: ${applied}개 판 채움. 원을 확인하고 틀린 것은 「표시 편집」으로 고치세요.`;
   updateSide(); draw(); };
-// ---------- 관리자 구역 (2026-10-13): 비밀번호를 넣으면 학습 없이 「관리자 기준」으로 자동 계수 ----------
-// 관리자 기준 = 색 콜로니 + 하얗게 비친 점 + 회색기 도는 옅은 콜로니 − 인쇄 격자점·한 줄로 늘어선 점·막 밖, 서로 붙거나 겹친 점은 하나로 셈
-// (비밀번호는 화면 잠금용일 뿐 보안 장치는 아님)
-const ADMIN_KEY = 4025704166, ADMIN_MERGE = 24 / 724;   // 붙은 점 기준: 막 반지름의 24/724 (원본 사진 막 반지름 724px에서 24px)
-const adminHash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619) >>> 0; return h; };
-let adminOn = false; try { adminOn = sessionStorage.getItem('gridcount:admin') === '1'; } catch (e) {}
-// 붙거나 겹친 자동 점을 하나로 (묶음의 가운데에 한 점)
-function mergeTouching(pts, gap){   // 사슬로 잇지 않음: 빽빽한 구역이 점 하나로 뭉치지 않게 (2026-10-14 사용자 지적)
-  const out = [];
-  for (const q of pts) if (!out.some(u => Math.hypot(u.x - q.x, u.y - q.y) < gap)) out.push(q);
-  return out;
-}
-async function adminCount(p){
-  await ensureCircle(p); await yieldUI();
-  const nc = await ncPoints(), r = findBlobs(p.img, p.data.circle);
-  let col = []; const ncl = []; let refl = 0, filt = 0, mk = 0, gp = 0, faint = 0, dup = 0;
-  if (!p.data.grid && !p.data.noGrid) autoGrid(p);
-  const imps = (p.data.marks || []).filter(k => k.imp);
-  const onImp = b => imps.some(k => Math.hypot(k.x - b.x, k.y - b.y) <= HALF_OVERLAP * Math.max(Math.sqrt(b.area / Math.PI) + 12, MATCH_MIN_R));
-  for (const b of r.blobs){ const c = classify(b, nc, null); if (c === 'reflect') refl++; else if (c === 'nclike') ncl.push(b); else if (c === 'filtered') filt++; else if (c === 'faint') faint++; else if (c === 'marker') mk++; else if (isGridPrint(p, b) || isGreyPrint(b)) gp++; else if (onImp(b)) dup++; else col.push(b); }
-  if (p.label === 'N.C') col.length = 0;
-  const a = {nc0: 0, nclike: ncl.length, reflect: refl, filtered: filt, faint, dup, marker: mk, gridPrint: gp, tuned: false, admin: true, excluded: +r.excluded.toFixed(3), nc: !!nc, at: new Date().toISOString(), applied: true};
-  const manual = (p.data.marks || []).filter(k => k.manual), now = Date.now();
-  let white = [], grey = [];
-  if (p.label !== 'N.C'){ const gap = 10 * Math.max(1, p.data.circle.r / 610), taken = col.map(b => [b.x, b.y]).concat(manual.map(k => [k.x, k.y]), imps.map(k => [k.x, k.y]));
-    white = findWhiteSpots(p).filter(w => !taken.some(([x, y]) => Math.hypot(x - w.x, y - w.y) < gap)); }
-  if (p.label !== 'N.C'){ const gap = 14 * Math.max(1, p.data.circle.r / 610), taken = col.map(b => [b.x, b.y]).concat(manual.map(k => [k.x, k.y]), imps.map(k => [k.x, k.y]), white.map(w => [w.x, w.y]));
-    grey = findGreySpots(p).filter(w => !taken.some(([x, y]) => Math.hypot(x - w.x, y - w.y) < gap)); }
-  { const all = col.map(b => ({x: b.x, y: b.y, o: b})).concat(white.map(w => ({x: w.x, y: w.y, o: w})), grey.map(w => ({x: w.x, y: w.y, o: w})));
-    const drop = new Set([...onLinePoints(all, p.data.circle.r)].map(i => all[i].o));
-    col = col.filter(b => !drop.has(b) || b.sat >= 40); white = white.filter(w => !drop.has(w)); grey = grey.filter(w => !drop.has(w)); a.onLine = drop.size; }
-  let pts = col.map(b => ({x: Math.round(b.x), y: Math.round(b.y), r: Math.round(Math.sqrt(b.area / Math.PI) + 12), t: now}))
-    .concat(white.map(w => ({x: Math.round(w.x), y: Math.round(w.y), r: Math.round(Math.sqrt(w.a / Math.PI) + 12), t: now, w: 1})),
-            grey.map(w => ({x: Math.round(w.x), y: Math.round(w.y), r: Math.round(Math.sqrt(w.a / Math.PI) + 12), t: now, g: 1})));
-  const before = pts.length; pts = mergeTouching(pts, ADMIN_MERGE * p.data.circle.r); a.merged = before - pts.length;
-  { const L = admApply(p, pts, manual, now); pts = L.pts; if (L.add) pts = mergeTouching(pts, ADMIN_MERGE * p.data.circle.r); a.learnDel = L.del; a.learnAdd = L.add; }
-  a.white = pts.filter(q => q.w).length; a.grey = pts.filter(q => q.g).length; a.nc0 = pts.length;
-  p.data.marks = manual.concat(pts); p.data.auto = a; p.data.adminRun = { at: a.at, pts: pts.map(q => ({x: q.x, y: q.y})), man0: manual.filter(k => !k.imp).map(k => [k.x, k.y]) };
-  if (!p.data.grid) autoGrid(p);
-  save(p); return a;
-}
-// ---------- 관리자 계수 학습 (2026-10-13): 관리자 자동 계수 뒤 사용자가 「지운 자동 점」과 「직접 더 찍은 점」으로 관리자 기준을 고침 ----------
-// 빼기 규칙: 관리자 계수가 찍은 점 중 사용자가 지운 점의 특징을 배워, 비슷한 점은 처음부터 찍지 않음
-// 더하기 규칙: 관리자 계수가 안 찍은 후보 중 사용자가 다시 직접 찍은 자리의 특징을 배워, 비슷한 후보를 더 찍음 (2026-10-14 사용자 지시로 다시 켬)
-// 두 규칙 모두 「새 판 예측」(판 하나씩 빼고 학습해 맞혀 보기)에서 틀린 개수가 학습 전보다 줄어야 켜짐 (2판 이상, 해당 점 3개 이상)
-function admModel(){ if (S.admM === undefined){ try { S.admM = JSON.parse(localStorage.getItem(LS_KEY + 'adminModel')) || null; } catch (e) { S.admM = null; } } return S.admM; }
-function admFit(rows){
-  const X = rows.map(r => r.f), Y = rows.map(r => r.y), d = X.length ? X[0].length : 0, n1 = Y.reduce((a, b) => a + b, 0), n0 = Y.length - n1;
-  if (!n1 || !n0) return null;
-  const mean = Array(d).fill(0), std = Array(d).fill(0);
-  for (const x of X) for (let k = 0; k < d; k++) mean[k] += x[k] / X.length;
-  for (const x of X) for (let k = 0; k < d; k++) std[k] += (x[k] - mean[k]) ** 2 / X.length;
-  for (let k = 0; k < d; k++) std[k] = Math.sqrt(std[k]) || 1;
-  const Z = X.map(x => x.map((v, k) => (v - mean[k]) / std[k])), wPos = Math.min(20, n0 / n1) || 1;
-  let w = Array(d).fill(0), b = 0;
-  for (let it = 0; it < 300; it++){ const gw = Array(d).fill(0); let gb = 0, W = 0;
-    for (let i = 0; i < Z.length; i++){ let z = b; for (let k = 0; k < d; k++) z += w[k] * Z[i][k];
-      const wt = Y[i] ? wPos : 1, e = (1 / (1 + Math.exp(-z)) - Y[i]) * wt; W += wt; for (let k = 0; k < d; k++) gw[k] += e * Z[i][k]; gb += e; }
-    for (let k = 0; k < d; k++) w[k] -= 0.3 * (gw[k] / W + 1e-3 * w[k]); b -= 0.3 * gb / W; }
-  const m = { w, b, mean, std, thr: 0.5 }, pr = X.map(x => lrProb(m, x));
-  let best = null;   // 기준 확률: 틀린 개수(놓침 + 잘못 적용)가 가장 적은 값, 같으면 덜 바꾸는 쪽(높은 기준)
-  for (let t = 0.05; t <= 0.951; t += 0.025){ let e = 0; for (let i = 0; i < Y.length; i++) if ((pr[i] >= t ? 1 : 0) !== Y[i]) e++; if (!best || e <= best.e) best = { t, e }; }
-  m.thr = +best.t.toFixed(3); return m;
-}
-const admErr = (m, rows) => rows.reduce((e, r) => e + (((lrProb(m, r.f) >= m.thr) ? 1 : 0) !== r.y ? 1 : 0), 0);
-function admTrain(kind){
-  const per = Object.values(S.train.adm || {}).map(s => s.rows.filter(r => r.t === kind)).filter(r => r.length), all = per.flat(), pos = all.filter(r => r.y).length;
-  const out = { active: false, plates: per.length, pos, n: all.length };
-  if (per.length < 2 || pos < 3) return out;
-  const m = admFit(all); if (!m) return out;
-  let cvE = 0, baseE = 0; const K = Math.min(per.length, 5);
-  for (let f = 0; f < K; f++){ const train = per.filter((_, i) => i % K !== f).flat(), test = per.filter((_, i) => i % K === f).flat(), mf = admFit(train), b0 = test.filter(r => r.y).length;
-    baseE += b0; cvE += mf ? admErr(mf, test) : b0; }
-  return { ...out, m, cvE, baseE, active: cvE < baseE };
-}
-async function admRelearn(){
-  const M = { R: admTrain('r'), A: admTrain('a'), plates: Object.keys(S.train.adm || {}).length, at: new Date().toISOString() };
-  S.admM = M; try { localStorage.setItem(LS_KEY + 'adminModel', JSON.stringify(M)); } catch (e) {}
-  await saveTrain(); return M;
-}
-function admStatus(){ const M = admModel(); if (!M || !M.plates) return '관리자 학습 자료 없음';
-  const r = M.R || {}, a = M.A || {};
-  return `관리자 학습 ${M.plates}판 · 지운 점 ${r.pos || 0}개 → 빼기 규칙 ${r.active ? '적용 중' : '아직 안 씀'} · 다시 직접 찍은 점 ${a.pos || 0}개 → 더하기 규칙 ${a.active ? '적용 중' : '아직 안 씀'} (각각 2판 이상·3개 이상, 새 판 예측이 좋아져야 켜짐)`; }
-const admGap = p => 16 * Math.max(1, p.data.circle.r / 610);
-// 판 하나의 관리자 학습 자료: 관리자 계수가 찍은 점(남김 0 / 지움 1) + 관리자 계수가 안 찍은 후보(직접 찍음 1 / 아님 0)
-async function adminVirtualRun(p){   /* 학습 규칙 없이 기본 관리자 기준으로만 세어 본 점 (판 기록은 그대로) */
-  const q = Object.assign({}, p, { data: Object.assign({}, p.data, { marks: [], auto: null, adminRun: null }) }), s0 = save, m0 = S.admM;
-  save = () => {}; S.admM = null;
-  try { await adminCount(q); } finally { save = s0; S.admM = m0; }
-  return q.data.marks.map(k => ({x: k.x, y: k.y}));
-}
-async function adminSample(p){
-  await ensureCircle(p);
-  if (!p.data.adminRun){   /* 2026-10-15 사용자 지시: 점 파일로 넣은 점(Claude 계수)·직접 찍은 점을 모두 「직접 계수」로 보고 관리자 학습 */
-    const C = allCandidates(p).cands, gap = admGap(p), pts = await adminVirtualRun(p), truth = (p.data.marks || []).filter(k => !k.imp), rows = [], rf = f => f.map(v => +(+v).toFixed(3));
-    let nDel = 0, nAdd = 0;
-    for (const q of pts){ let bi = -1, bd = gap; C.forEach((c, i) => { const d = Math.hypot(c.x - q.x, c.y - q.y); if (d < bd){ bd = d; bi = i; } }); if (bi < 0) continue;
-      const del = truth.some(k => Math.hypot(k.x - q.x, k.y - q.y) < gap) ? 0 : 1; nDel += del; rows.push({ t: 'r', y: del, f: rf(C[bi].f) }); }
-    for (const c of C){ if (pts.some(q => Math.hypot(q.x - c.x, q.y - c.y) < gap)) continue;
-      const lim = HALF_OVERLAP * Math.max(Math.sqrt(c.area / Math.PI) + 12, MATCH_MIN_R), y = truth.some(m => Math.hypot(m.x - c.x, m.y - c.y) <= lim) ? 1 : 0;
-      nAdd += y; rows.push({ t: 'a', y, f: rf(c.f) }); }
-    if (p !== cur()){ p.img = null; p.lod = null; }
-    return { at: new Date().toISOString(), name: p.name, nDel, nAdd, rows, src: 'truth' };
-  }
-  const C = allCandidates(p).cands, run = p.data.adminRun, gap = admGap(p);
-  const autos = (p.data.marks || []).filter(k => !k.manual), man0 = run.man0 || [];
-  const man = (p.data.marks || []).filter(k => k.manual && !k.imp && !man0.some(([x, y]) => Math.hypot(x - k.x, y - k.y) < 2));
-  const rows = [], rf = f => f.map(v => +(+v).toFixed(3));
-  let nDel = 0, nAdd = 0;
-  for (const q of run.pts){ let bi = -1, bd = gap; C.forEach((c, i) => { const d = Math.hypot(c.x - q.x, c.y - q.y); if (d < bd){ bd = d; bi = i; } }); if (bi < 0) continue;
-    const del = autos.some(k => Math.hypot(k.x - q.x, k.y - q.y) < 3) ? 0 : 1; nDel += del; rows.push({ t: 'r', y: del, f: rf(C[bi].f) }); }
-  for (const c of C){ if (run.pts.some(q => Math.hypot(q.x - c.x, q.y - c.y) < gap)) continue;
-    const lim = HALF_OVERLAP * Math.max(Math.sqrt(c.area / Math.PI) + 12, MATCH_MIN_R), y = man.some(m => Math.hypot(m.x - c.x, m.y - c.y) <= lim) ? 1 : 0;
-    nAdd += y; rows.push({ t: 'a', y, f: rf(c.f) }); }
-  if (p !== cur()){ p.img = null; p.lod = null; }
-  return { at: new Date().toISOString(), name: p.name, nDel, nAdd, rows };
-}
-const admLearnable = p => p && p.label !== 'N.C' && !hasImp(p) && (p.data.adminRun || (p.data.marks || []).some(k => k.pf) || (adminOn && (p.data.marks || []).some(k => k.manual)));
-async function adminLearnPlate(p, silent, noRelearn){
-  if (!p || !admLearnable(p)) return null;
-  $('learnState').textContent = `「${p.name}」 관리자 학습 자료 만드는 중…`; await yieldUI();
-  S.train.adm = S.train.adm || {}; const s = await adminSample(p); S.train.adm[trainId(p)] = s;
-  p.data.learnedAt = new Date().toISOString(); save(p);
-  if (noRelearn) return s;
-  $('learnState').textContent = '관리자 기준 다시 맞추는 중…'; await yieldUI();
-  await admRelearn(); $('learnState').textContent = `「${p.name}」 관리자 학습: 지운 점 ${s.nDel}개 · 다시 직접 찍은 점 ${s.nAdd}개 → ${admStatus()}`;
-  renderList(); updateSide(); return s;
-}
-// 관리자 계수 결과에 학습 규칙 적용 (빼기 → 더하기)
-function admApply(p, pts, manual, now){
-  const M = admModel(), out = { pts, del: 0, add: 0 };
-  if (!M || !((M.R && M.R.active) || (M.A && M.A.active))) return out;
-  const C = allCandidates(p).cands, gap = admGap(p), orig = pts.slice();
-  const near = q => { let best = null, bd = gap; for (const c of C){ const d = Math.hypot(c.x - q.x, c.y - q.y); if (d < bd){ bd = d; best = c; } } return best; };
-  if (M.R && M.R.active) out.pts = out.pts.filter(q => { const c = near(q); if (c && lrProb(M.R.m, c.f) >= M.R.m.thr){ out.del++; return false; } return true; });
-  if (M.A && M.A.active && p.label !== 'N.C') for (const c of C){
-    if (orig.some(q => Math.hypot(q.x - c.x, q.y - c.y) < gap) || manual.some(k => Math.hypot(k.x - c.x, k.y - c.y) < gap)) continue;
-    if (lrProb(M.A.m, c.f) >= M.A.m.thr){ out.pts.push({ x: Math.round(c.x), y: Math.round(c.y), r: Math.round(Math.sqrt(c.area / Math.PI) + 12), t: now, ad: 1 }); out.add++; } }
-  return out;
-}
-function adminText(a){ return `관리자 자동 계수: 콜로니 ${a.nc0}개 (흰 점 ${a.white}·회색 ${a.grey} 포함${a.merged ? `, 붙은 점 ${a.merged}개 합침` : ''}${a.gridPrint ? `, 격자 인쇄 점 ${a.gridPrint}개 뺌` : ''}${a.onLine ? `, 한 줄 점 ${a.onLine}개 뺌` : ''}${a.learnDel ? `, 학습으로 ${a.learnDel}개 뺌` : ''}${a.learnAdd ? `, 학습으로 ${a.learnAdd}개 더함` : ''})`; }
-function adminShow(){ const b = $('btnAdmin'); b.textContent = adminOn ? '🔓 관리자 계수 켜짐' : '🔒 관리자 계수'; b.classList.toggle('on', adminOn);
-  b.title = adminOn ? '지금 「전체 판 자동 계수」「이 판 자동 계수」는 관리자 기준으로 셉니다. 누르면 끔 · ' + admStatus() : '비밀번호를 넣으면 자동 계수 버튼이 관리자 기준으로 셈'; }
-async function adminAll(){
-  const todo = S.plates.filter(p => !hasAuto(p) && !Object.keys(p.data.cells).length);
-  if (!todo.length) return alert('자동 점이 없는 판이 없습니다. 다시 세려면 「전체 판 자동 계수 지우기」를 먼저 누르세요.');
-  if (!confirm(`관리자 기준으로 판 ${todo.length}개를 자동 계수할까요?`)) return;
-  let k = 0;
-  for (const p of todo){ k++; $('autoInfo').textContent = `관리자 계수 중 ${k}/${todo.length} — ${p.name}`; await yieldUI();
-    await adminCount(p); if (p !== cur()) { p.img = null; p.lod = null; } renderList(); }
-  $('autoInfo').textContent = `관리자 자동 계수 끝: ${todo.length}개 판.`; updateSide(); draw(); }
-$('btnAdmin').onclick = () => {
-  if (adminOn){ adminOn = false; try { sessionStorage.removeItem('gridcount:admin'); } catch (e) {} adminShow(); return; }
-  const s = prompt('관리자 비밀번호를 입력하세요'); if (s == null) return;
-  if (adminHash(s.trim()) !== ADMIN_KEY) return alert('비밀번호가 맞지 않습니다.');
-  adminOn = true; try { sessionStorage.setItem('gridcount:admin', '1'); } catch (e) {} adminShow(); };
-adminShow();
 // ---------- 자동 계수 학습: 직접 계수한 판을 모아 자동 계수 기준을 계속 다시 맞춤 ----------
 // 학습 자료(판별: 자동 계수 후보 점 특징 + 직접 찍은 점)는 브라우저(IndexedDB)에 쌓이고,
 // 학습에는 직접 찍은 점(주황)만 씀 (자동 점은 쓰지 않음). 자동 계수가 놓친 직접 점까지 잡히도록, 후보는 평소보다 옅고 작은 점·반사 판정 점까지 넓게 모아 두고
@@ -1811,7 +1652,6 @@ async function relearn(reason){
 }
 async function learnPlate(p, silent){
   if (!p || p.label === 'N.C') return;
-  if (p.data.adminRun || (p.data.marks || []).some(k => k.pf) || (adminOn && admLearnable(p))) return adminLearnPlate(p, silent);   /* 관리자 계수 판·점 파일 판 = 관리자 학습 */
   if (hasImp(p)){ if (!silent) alert('이 판은 다른 프로그램 표시(보라)가 그려진 사진이라 학습에 쓰지 않습니다. 사진 위 표시가 콜로니 모양을 가려 오히려 엉뚱한 곳에 점을 찍게 됩니다.'); return; }
   if (!(p.data.marks || []).some(k => k.manual && !k.imp)){ if (!silent) alert('이 판에는 직접 찍은 점(주황)이 없습니다. 직접 계수를 끝낸 뒤 학습시키세요.'); return; }
   $('learnState').textContent = `「${p.name}」 학습 자료 만드는 중…`; await yieldUI();
@@ -1842,32 +1682,21 @@ function showCal(){
 }
 $('btnLearn').onclick = () => learnPlate(cur());
 $('btnLearnAll').onclick = async () => {
-  const adm = S.plates.filter(p => p.data.done && admLearnable(p) && (p.data.adminRun || (p.data.marks || []).some(k => k.pf) || adminOn));
-  if (adm.length && confirm(`관리자 학습에 넣을 완료 판 ${adm.length}개 (관리자 계수 판·점 파일로 넣은 판${adminOn ? '·직접 계수 판' : ''})를 학습할까요?`)){
-    for (let i = 0; i < adm.length; i++){ $('learnState').textContent = `관리자 학습 자료 ${i+1}/${adm.length} — ${adm[i].name}`; await adminLearnPlate(adm[i], true, true); }
-    await admRelearn(); $('learnState').textContent = admStatus(); renderList(); }
-  const list = S.plates.filter(p => p.label !== 'N.C' && p.data.done && !adm.includes(p) && !hasImp(p) && (p.data.marks || []).some(k => k.manual && !k.imp));
-  if (!list.length){ if (!adm.length) alert('✔ 완료로 표시했고 직접 찍은 점이 있는 판이 없습니다.'); return; }
+  const list = S.plates.filter(p => p.label !== 'N.C' && p.data.done && !hasImp(p) && (p.data.marks || []).some(k => k.manual && !k.imp));
+  if (!list.length){ alert('✔ 완료로 표시했고 직접 찍은 점이 있는 판이 없습니다.'); return; }
   if (!confirm(`완료한 판 ${list.length}개를 학습 자료에 넣고 기준을 다시 맞출까요?`)) return;
   for (let i = 0; i < list.length; i++){ $('learnState').textContent = `학습 자료 만드는 중 ${i+1}/${list.length} — ${list[i].name}`; await yieldUI();
     S.train.samples[trainId(list[i])] = await sampleFromPlate(list[i]); list[i].data.learnedAt = new Date().toISOString(); save(list[i]); }
   const r = await relearn(`완료 판 ${list.length}개 일괄`);
   $('learnState').textContent = r ? `학습 완료 → 점수 ${scoreOf(r.now)}점 (${Object.keys(S.train.samples).length}판)` : ''; renderList();
 };
-// 학습 초기화: 관리자 계수가 꺼져 있으면 사용자 학습(직접 찍은 점으로 배운 자동 계수 기준), 켜져 있으면 관리자 학습(지운 점으로 배운 빼기 규칙)을 지움
+// 학습 초기화: 직접 찍은 점으로 배운 자동 계수 기준을 지움
 // 찍어 둔 점·계수 결과·사진은 그대로 둠
 $('btnLearnReset').onclick = async () => {
-  if (adminOn){
-    const n = Object.keys(S.train.adm || {}).length;
-    if (!confirm(`관리자 학습을 초기화할까요?\n\n관리자 학습 자료 ${n}판과 「지운 점」으로 배운 빼기 규칙을 지웁니다. 관리자 계수는 처음 기준으로 돌아갑니다.\n찍어 둔 점·계수 결과는 그대로 남습니다.`)) return;
-    S.train.adm = {}; S.admM = null; try { localStorage.removeItem(LS_KEY + 'adminModel'); } catch (e) {}
-    S.plates.forEach(p => { if (p.data.adminRun && p.data.learnedAt){ delete p.data.learnedAt; save(p); } });
-    await saveTrain(); $('learnState').textContent = '관리자 학습을 초기화했습니다.'; adminShow(); renderList(); updateSide(); return;
-  }
   const n = Object.keys(S.train.samples).length;
-  if (!confirm(`자동 계수 학습을 초기화할까요?\n\n학습 자료 ${n}판과 학습 기준을 모두 지웁니다. 다시 2판 이상 학습할 때까지 자동 계수는 점을 찍지 않습니다.\n찍어 둔 점·계수 결과는 그대로 남습니다.\n(관리자 학습은 관리자 계수를 켠 상태에서 따로 초기화합니다.)`)) return;
+  if (!confirm(`자동 계수 학습을 초기화할까요?\n\n학습 자료 ${n}판과 학습 기준을 모두 지웁니다. 다시 2판 이상 학습할 때까지 자동 계수는 점을 찍지 않습니다.\n찍어 둔 점·계수 결과는 그대로 남습니다.`)) return;
   S.train.samples = {}; S.train.log = []; S.autoParams = null; try { localStorage.removeItem(LS_KEY + 'autoParams'); } catch (e) {}
-  S.plates.forEach(p => { if (!p.data.adminRun && p.data.learnedAt){ delete p.data.learnedAt; save(p); } });
+  S.plates.forEach(p => { if (p.data.learnedAt){ delete p.data.learnedAt; save(p); } });
   await saveTrain(); S.ncPts = null; $('learnState').textContent = '자동 계수 학습을 초기화했습니다.'; showCal(); renderList(); updateSide(); };// ---------- 학습 중 표시 (2026-10-14): 학습하는 동안 사진 위쪽에 「학습 중…」 띠 ----------
 let busyN = 0, busyObs = null;
 function busyOn(){ busyN++; const el = $('learnBusy'), tb = $('tools'); el.style.top = ((tb ? tb.offsetHeight : 0) + 22) + 'px'; el.style.display = 'flex';
@@ -1875,7 +1704,9 @@ function busyOn(){ busyN++; const el = $('learnBusy'), tb = $('tools'); el.style
   if (!busyObs){ busyObs = new MutationObserver(sync); busyObs.observe($('learnState'), { childList: true, characterData: true, subtree: true }); } }
 function busyOff(){ busyN = Math.max(0, busyN - 1); if (busyN) return; $('learnBusy').style.display = 'none'; if (busyObs){ busyObs.disconnect(); busyObs = null; } }
 const withBusy = fn => async function(...a){ busyOn(); await yieldUI(); try { return await fn.apply(this, a); } finally { busyOff(); } };
-learnPlate = withBusy(learnPlate); adminLearnPlate = withBusy(adminLearnPlate); relearn = withBusy(relearn); admRelearn = withBusy(admRelearn);
+learnPlate = withBusy(learnPlate); relearn = withBusy(relearn);
+// 관리자 계수는 2026-10-22 사용자 지시로 없앰: 예전에 저장된 관리자 학습 자료 정리
+try { localStorage.removeItem(LS_KEY + 'adminModel'); sessionStorage.removeItem('gridcount:admin'); } catch (e) {}
 { const f = $('btnLearnAll').onclick; $('btnLearnAll').onclick = async () => { let on = false; const c0 = window.confirm;
     window.confirm = m => { const r = c0(m); if (r && !on){ on = true; busyOn(); } return r; };   // 「학습할까요?」 확인 뒤부터 표시
     try { await f(); } finally { window.confirm = c0; if (on) busyOff(); } }; }
@@ -1889,7 +1720,7 @@ $('paramsIn').onchange = async e => { const f = e.target.files[0]; e.target.valu
     S.autoParams = { ...o.params, imported: f.name }; localStorage.setItem(LS_KEY + 'autoParams', JSON.stringify(S.autoParams)); S.ncPts = null; loadTrain();
   } catch(err){ alert('학습 기준 파일이 아닙니다.'); } };
 
-function autoText(a){ if (!a) return ''; if (a.admin) return adminText(a); if (a.skipped === 'imp') return '이 판은 다른 프로그램 표시(보라)로 센 판이라 자동 계수를 하지 않습니다. 보라 점 개수가 계수 결과입니다.'; if (a.view != null) return `자동 계수${a.tuned ? '(맞춘 기준)' : ''}: 이 판 자동 점 ${a.nc0}개`; return `자동 계수${a.tuned ? '(맞춘 기준)' : ''}: 콜로니 ${a.nc0}개 (NC 유사 점 ${a.nclike}개·반사 ${a.reflect}개${a.filtered ? `·${a.nc || a.tuned ? '기준 미달' : '옅고 작은 잡티'} ${a.filtered}개` : ''} 제외${a.nc ? '' : ', N.C 없음 → 진하기 18·크기 60px 이상만 셈. N.C 사진을 넣으면 더 정확'})${a.marker ? ` · 다른 프로그램 표시로 보이는 점 ${a.marker}개는 뺌 → 「표시 점 자동 세기」를 쓰세요` : ''}${a.gridPrint ? ` · 격자선 인쇄 점선 ${a.gridPrint}개 뺌` : ''}${a.faint ? ` · 흐릿한 점 ${a.faint}개 안 셈` : ''}${a.dup ? ` · 이미 센 보라 점과 겹친 ${a.dup}개는 그대로` : ''}${a.excluded > 0.15 ? ` · 펜/라벨로 막의 ${(a.excluded*100).toFixed(0)}% 제외됨 — 확인 필요` : ''}`; }
+function autoText(a){ if (!a) return ''; if (a.admin) return `자동 계수(예전 관리자 기준): 콜로니 ${a.nc0}개`; if (a.skipped === 'imp') return '이 판은 다른 프로그램 표시(보라)로 센 판이라 자동 계수를 하지 않습니다. 보라 점 개수가 계수 결과입니다.'; if (a.view != null) return `자동 계수${a.tuned ? '(맞춘 기준)' : ''}: 이 판 자동 점 ${a.nc0}개`; return `자동 계수${a.tuned ? '(맞춘 기준)' : ''}: 콜로니 ${a.nc0}개 (NC 유사 점 ${a.nclike}개·반사 ${a.reflect}개${a.filtered ? `·${a.nc || a.tuned ? '기준 미달' : '옅고 작은 잡티'} ${a.filtered}개` : ''} 제외${a.nc ? '' : ', N.C 없음 → 진하기 18·크기 60px 이상만 셈. N.C 사진을 넣으면 더 정확'})${a.marker ? ` · 다른 프로그램 표시로 보이는 점 ${a.marker}개는 뺌 → 「표시 점 자동 세기」를 쓰세요` : ''}${a.gridPrint ? ` · 격자선 인쇄 점선 ${a.gridPrint}개 뺌` : ''}${a.faint ? ` · 흐릿한 점 ${a.faint}개 안 셈` : ''}${a.dup ? ` · 이미 센 보라 점과 겹친 ${a.dup}개는 그대로` : ''}${a.excluded > 0.15 ? ` · 펜/라벨로 막의 ${(a.excluded*100).toFixed(0)}% 제외됨 — 확인 필요` : ''}`; }
 
 // ---------- 목록 / 사이드 ----------
 function renderList(){
